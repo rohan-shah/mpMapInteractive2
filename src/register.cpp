@@ -1,6 +1,5 @@
 #include <Rcpp.h>
 #include "interface.h"
-#include "interface2.h"
 #include "loadQt.h"
 extern "C"
 {
@@ -9,7 +8,6 @@ extern "C"
 #endif
 	R_CallMethodDef callMethods[] = 
 	{
-		{"qtPlotMpMap", (DL_FUNC)&qtPlotMpMap, 2},
 		{"qtPlotMpMap2", (DL_FUNC)&qtPlotMpMap2, 2},
 		{"loadQT", (DL_FUNC)&loadQT, 0},
 		{NULL, NULL, 0}
