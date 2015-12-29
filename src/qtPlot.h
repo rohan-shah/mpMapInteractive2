@@ -44,7 +44,7 @@ namespace mpMapInteractive
 		Q_OBJECT
 	public:
 		~qtPlot();
-		qtPlot(double* rawImageData, const std::vector<int>& groups, const std::vector<std::string>& markerNames, double* auxData, int auxRows);
+		qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& groups, const std::vector<std::string>& markerNames, double* auxData, int auxRows);
 		const qtPlotData& getData();
 	protected:
 		void closeEvent(QCloseEvent* event);
@@ -95,14 +95,15 @@ namespace mpMapInteractive
 
 		//needed as the stride for the two double arrays below. 
 		int nOriginalMarkers;
-		double* rawImageData;
-		double* imputedRawImageData;
+		unsigned char* rawImageData;
+		unsigned char* imputedRawImageData;
+		std::vector<double>& levels;
 		bool isFullScreen;
 		ZoomGraphicsView* graphicsView;
 		QLabel* statusLabel;
 		QGraphicsScene* graphicsScene;
 		std::set<imageTile, imageTileComparer> imageTiles;
-		uchar* originalDataToChar;
+		std::vector<uchar> originalDataToChar;
 		QLabel* joinGroupsLabel;
 		QLineEdit* group1Edit;
 		QLineEdit* group2Edit;

@@ -10,7 +10,7 @@ namespace mpMapInteractive
 	class imageTile
 	{
 		public:
-			imageTile(uchar* data, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene);
+			imageTile(std::vector<uchar>& data, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene);
 			~imageTile();
 			const std::vector<int>& getRowIndices() const;
 			const std::vector<int>& getColumnIndices() const;

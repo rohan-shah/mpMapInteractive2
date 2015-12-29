@@ -5,7 +5,7 @@ namespace mpMapInteractive
 	imageTile::~imageTile()
 	{
 	}
-	imageTile::imageTile(uchar* data, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene)
+	imageTile::imageTile(std::vector<uchar>& data, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene)
 	:rowIndices(rowIndices), columnIndices(columnIndices), rowGroup(rowGroup), columnGroup(columnGroup)
 	{
 		QImage* image = new QImage((int)rowIndices.size(), (int)columnIndices.size(), QImage::Format_Indexed8);
@@ -19,7 +19,9 @@ namespace mpMapInteractive
 			uchar* reorderedData = image->scanLine((int)j);
 			for(size_t i = 0; i < rowIndices.size(); i++)
 			{
-				reorderedData[i] = data[columnIndices[j] * dataRows + rowIndices[i]];
+				std::size_t rowIndex = rowIndices[i], columnIndex = columnIndices[j];
+				if(rowIndex > columnIndex) std::swap(rowIndex, columnIndex);
+				reorderedData[i] = data[(columnIndex*(columnIndex+1))/2 + rowIndex];
 			}
 		}
 		QPixmap pixMap = QPixmap::fromImage(*image);

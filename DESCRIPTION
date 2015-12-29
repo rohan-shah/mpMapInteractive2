@@ -1,11 +1,11 @@
 Package: mpMapInteractive
 Type: Package
-Title: Interactive components for package mpMap
+Title: Interactive components for package mpMap2
 Version: 0.2
 Date: 2013-08-30
 Author: Rohan Shah
 Maintainer: Rohan Shah <cran@bookshah.com>
-Description: This package provides interactive plotting functions for the mpMap package
+Description: This package provides interactive plotting functions for the mpMap2 package
 License: GPL v3
 Collate:
    'onLoad.R'
@@ -13,5 +13,6 @@ Collate:
    'Rcpp_exceptions.R'
 Depends:
     seriation,
-    Rcpp
+    Rcpp,
+    mpMap2
 LinkingTo: Rcpp

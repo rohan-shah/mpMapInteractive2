@@ -110,7 +110,6 @@ namespace mpMapInteractive
 	{
 		imageTiles.clear();
 		delete[] imputedRawImageData;
-		delete originalDataToChar;
 		delete horizontalHighlight;
 		delete verticalHighlight;
 		delete intervalHighlight;
@@ -146,21 +145,17 @@ namespace mpMapInteractive
 	}
 	void qtPlot::initialiseImageData(int nMarkers)
 	{
-		originalDataToChar = new uchar[nMarkers * nMarkers];
-		//scale data from float to integer
-		for(int i = 0; i < nMarkers; i++)
+		originalDataToChar.resize((nMarkers * (nMarkers+1))/2);
+		//Conversion vector from levels to colours. Filled with the NA colour. 
+		std::vector<uchar> levelToChar(0xff+1, nColours);
+		for(int i = 0; i < levels.size(); i++)
 		{
-			for(int j = 0; j < nMarkers; j++)
-			{
-				double pixelVal = rawImageData[i * nMarkers + j];
-				//NA values have different colour
-				if(pixelVal != pixelVal)
-				{
-					//The nColours + 1 indexed colour is the NA colour
-					originalDataToChar[i * nMarkers + j] = (uchar)nColours;
-				}
-				else originalDataToChar[i * nMarkers + j] = (uchar)std::floor(0.5f + (nColours - 1)* pixelVal / 0.5);
-			}
+			levelToChar[i] = (uchar)std::floor(0.5f + (nColours - 1)* levels[i] / 0.5);
+		}
+		//scale data from float to integer
+		for(int i = 0; i < (nMarkers*(nMarkers+1))/2; i++)
+		{
+			originalDataToChar[i] = levelToChar[rawImageData[i]];
 		}
 	}
 	QFrame* qtPlot::addIntervalMode()
@@ -316,8 +311,8 @@ namespace mpMapInteractive
 		bounding.setHeight(nMarkers + nMarkers/10.0);
 		graphicsView->setSceneRect(bounding);
 	}
-	qtPlot::qtPlot(double* rawImageData, const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames, double* auxData, int auxRows)
-		:currentMode(Groups), horizontalGroup(-1), verticalGroup(-1), horizontalHighlight(NULL), verticalHighlight(NULL), intervalHighlight(NULL), singleHighlight(NULL), data(new qtPlotData(originalGroups, originalMarkerNames)), nOriginalMarkers((int)originalGroups.size()), rawImageData(rawImageData), imputedRawImageData(NULL), isFullScreen(false), highlightColour("blue"), startIntervalPos(-1), singleModePos(-1), auxData(auxData), auxRows(auxRows), computationMutex(QMutex::NonRecursive), transparency(NULL), orderAllExcept(NULL)
+	qtPlot::qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames, double* auxData, int auxRows)
+		:currentMode(Groups), horizontalGroup(-1), verticalGroup(-1), horizontalHighlight(NULL), verticalHighlight(NULL), intervalHighlight(NULL), singleHighlight(NULL), data(new qtPlotData(originalGroups, originalMarkerNames)), nOriginalMarkers((int)originalGroups.size()), rawImageData(rawImageData), imputedRawImageData(NULL), levels(levels), isFullScreen(false), highlightColour("blue"), startIntervalPos(-1), singleModePos(-1), auxData(auxData), auxRows(auxRows), computationMutex(QMutex::NonRecursive), transparency(NULL), orderAllExcept(NULL)
 	{
 		highlightColour.setAlphaF(0.3);
 		int nMarkers = (int)originalGroups.size();
@@ -904,9 +899,9 @@ delete_tile:
 	}
 	void qtPlot::doImputation()
 	{
-		if(imputedRawImageData == NULL) imputedRawImageData = new double[nOriginalMarkers * nOriginalMarkers];
+		if(imputedRawImageData == NULL) imputedRawImageData = new unsigned char[nOriginalMarkers * nOriginalMarkers];
 		
-		memcpy(imputedRawImageData, rawImageData, sizeof(double)*nOriginalMarkers * nOriginalMarkers);
+		memcpy(imputedRawImageData, rawImageData, sizeof(unsigned char)*nOriginalMarkers * nOriginalMarkers);
 		//a vector of linkage groups, which assigns a group to EVERY MARKER ORIGINALLY PRESENT
 		const std::vector<int>& oldGroups = data->getCurrentGroups();
 		int additionalGroupNumber = *std::max_element(oldGroups.begin(), oldGroups.end()) + 1;
@@ -1064,7 +1059,7 @@ delete_tile:
 					//The ordering code crashes with only one or two markers
 					if(nSubMarkers >= 3)
 					{
-						order(imputedRawImageData, nOriginalMarkers, currentPermutation, start, end+1, resultingPermutation);
+						order(imputedRawImageData, levels, nOriginalMarkers, currentPermutation, start, end+1, resultingPermutation);
 						//and the conversion of the submatrix permutation to the bigger matrix
 						std::vector<int> totalPermutation = identityPermutation;
 						for(int i = 0; i < nSubMarkers; i++)

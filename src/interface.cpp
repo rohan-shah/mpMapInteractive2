@@ -12,7 +12,7 @@ extern "C"
 		{
 			mpcross = mpcross__;
 		}
-		catch(Rcpp::not_compatible&)
+		catch(...)
 		{
 			throw Rcpp::not_compatible("Input mpcross must be an S4 object");
 		}
@@ -23,16 +23,16 @@ extern "C"
 		Rcpp::Function validObject("validObject");
 		try
 		{
-			Rcpp::LogicalVector result = validObject(mpcross);
+			Rcpp::LogicalVector result = validObject(mpcross, Rcpp::Named("complete") = Rcpp::wrap(true));
 			if(!Rcpp::as<bool>(result))
 			{
-				throw Rcpp::exception("Invalid mpcrossLG object in qtPlotMpMap2");
+				throw Rcpp::exception("Invalid mpcrossLG object. Please ensure that validObject returns TRUE.");
 			}
 		}
-		catch(Rcpp::eval_error& except)
+		catch(...)
 		{
 			std::stringstream ss;
-			ss << "Invalid mpcrossLG object in qtPlotMpMap2:" << std::endl << except.what();
+			ss << "Invalid mpcrossLG object. Please ensure that validObject returns TRUE." << std::endl;
 			throw Rcpp::exception(ss.str().c_str());
 		}
 		Rcpp::Function markerNamesFunc("markers");
@@ -41,7 +41,7 @@ extern "C"
 		{
 			rf = Rcpp::as<Rcpp::S4>(mpcross.slot("rf"));
 		}
-		catch(Rcpp::not_compatible&)
+		catch(...)
 		{
 			throw Rcpp::not_compatible("Input mpcross@rf must be an S4 object");
 		}
@@ -53,7 +53,7 @@ extern "C"
 		{
 			lg = Rcpp::as<Rcpp::S4>(mpcross.slot("lg"));
 		}
-		catch(Rcpp::not_compatible&)
+		catch(...)
 		{
 			throw Rcpp::not_compatible("Input mpcross@lg must be an S4 object");
 		}
@@ -61,15 +61,16 @@ extern "C"
 		{
 			throw Rcpp::not_compatible("Input mpcross@lg must extend class lg");
 		}
-		Rcpp::NumericMatrix theta;
+		Rcpp::S4 theta;
 		try
 		{
-			theta = Rcpp::as<Rcpp::NumericMatrix>(rf.slot("theta"));
+			theta = Rcpp::as<Rcpp::S4>(rf.slot("theta"));
 		}
-		catch(Rcpp::not_compatible&)
+		catch(...)
 		{
 			throw Rcpp::not_compatible("Input mpcross@rf@theta must be a numeric matrix");
 		}
+		
 		std::vector<int> groups;
 		try
 		{
@@ -79,6 +80,27 @@ extern "C"
 		{
 			throw Rcpp::not_compatible("Input mpcross@lg@groups must be an integer vector");
 		}
+		
+		Rcpp::RawVector thetaData;
+		try
+		{
+			thetaData = theta.slot("data");
+		}
+		catch(...)
+		{
+			throw Rcpp::not_compatible("Input mpcross@rf@theta@data must be a raw vector");
+		}
+
+		Rcpp::NumericVector thetaLevels;
+		try
+		{
+			thetaLevels = theta.slot("levels");
+		}
+		catch(...)
+		{
+			throw Rcpp::not_compatible("Input mpcross@rf@theta@levels must be a numeric vector");
+		}
+		std::vector<double> thetaLevelsVector = Rcpp::as<std::vector<double> >(thetaLevels);
 
 		//check the auxillary numeric matrix
 		double* auxillaryPointer = NULL;
@@ -91,7 +113,7 @@ extern "C"
 			{
 				auxillaryNumeric = Rcpp::as<Rcpp::NumericMatrix>(auxillaryNumeric_);
 			}
-			catch(Rcpp::not_compatible&)
+			catch(...)
 			{
 				throw Rcpp::not_compatible("Input auxillaryNumeric must be a numeric matrix");
 			}
@@ -100,7 +122,7 @@ extern "C"
 			{
 				auxDim = Rcpp::as<Rcpp::IntegerVector>(auxillaryNumeric.attr("dim"));
 			}
-			catch(Rcpp::not_compatible&)
+			catch(...)
 			{
 				throw Rcpp::not_compatible("Input auxillaryNumeric had dimensions of wrong type");
 			}
@@ -108,7 +130,7 @@ extern "C"
 			{
 				throw Rcpp::not_compatible("Input auxillaryNumeric had dimensions of wrong length");
 			}
-			if(auxDim[1] != theta.ncol())
+			if(auxDim[1] != markerNames.size())
 			{
 				throw Rcpp::not_compatible("Input auxillaryNumeric had wrong number of columns");
 			}
@@ -123,7 +145,7 @@ extern "C"
 		argv[2] = new char[1];
 		argv[0][0] = argv[1][0] = argv[2][0] = 0;
 		QApplication app(argc, argv);
-		mpMapInteractive::qtPlot plot(&(theta(0,0)), groups, markerNames, auxillaryPointer, auxRows);
+		mpMapInteractive::qtPlot plot(&(thetaData(0)), thetaLevelsVector, groups, markerNames, auxillaryPointer, auxRows);
 		plot.show();
 		app.exec();
 
