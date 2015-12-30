@@ -6,7 +6,7 @@
 #include <Rcpp.h>
 namespace mpMapInteractive
 {
-	void order(double* rawData, int nOriginalMarkers, const std::vector<int>& permutation, int startIndex, int endIndex, std::vector<int>& resultingPermutation)
+	void order(unsigned char* originalRawData, std::vector<double>& levels, int nOriginalMarkers, const std::vector<int>& permutation, int startIndex, int endIndex, std::vector<int>& resultingPermutation)
 	{
 		int nSubMarkers = endIndex - startIndex;
 		Rcpp::NumericMatrix subMatrix(nSubMarkers, nSubMarkers);
@@ -21,7 +21,9 @@ namespace mpMapInteractive
 			for(int j = 0; j < nSubMarkers; j++)
 			{
 				double* dest = mem + i + j * nSubMarkers;
-				*dest = rawData[permutation[i + startIndex] + permutation[j + startIndex] * nOriginalMarkers];
+				int row = permutation[i + startIndex], column = permutation[i + startIndex];
+				if(row > column) std::swap(row, column);
+				*dest = levels[originalRawData[(column * (column + 1))/2 + row]];
 				nonZero |= (*dest != 0);
 			}
 		}

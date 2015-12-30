@@ -28,12 +28,11 @@ qtPlot <- function(mpcross, auxillaryNumeric = NULL)
 			stop("Column names of auxillaryNumeric did not match up with marker names of mpcross")
 		}
 	}
-	result <- .Call("qtPlotMpMap2", mpcross, auxillaryNumeric, PACKAGE="mpMapInteractive")
+	result <- .Call("qtPlotMpMap2", mpcross, auxillaryNumeric, PACKAGE="mpMapInteractive2")
 	markerNames <- result[[1]]
 	groups <- result[[2]]
 	names(groups) <- markerNames
 	withoutLG <- as(mpcross, "mpcrossRF")
-	selectedMethod <- selectMethod("subset", "mpcrossRF")
-	subsetted <- selectedMethod(withoutLG, markers = markerNames)
+	subsetted <- subset(withoutLG, markers = markerNames)
 	return(new("mpcrossLG", subsetted, lg = new("lg", groups = groups, allGroups = unique(groups))))
 }

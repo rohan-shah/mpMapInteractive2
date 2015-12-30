@@ -8,6 +8,6 @@
 //output parameter for resulting permutation. 
 namespace mpMapInteractive
 {
-	void order(double* rawData, int nOriginalMarkers, const std::vector<int>& permutation, int startIndex, int endIndex, std::vector<int>& resultingPermutation);
+	void order(unsigned char* originalRawData, std::vector<double>& levels, int nOriginalMarkers, const std::vector<int>& permutation, int startIndex, int endIndex, std::vector<int>& resultingPermutation);
 }
 #endif

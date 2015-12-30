@@ -29,7 +29,7 @@ namespace mpMapInteractive
 		{
 			return (int)originalMarkerNames.size();
 		}
-		return (int)cumulativePermutations[cumulativePermutations.size()-1].size();
+		return (int)cumulativePermutations.rbegin()->size();
 	}
 	const std::vector<int>& qtPlotData::getCurrentGroups() const
 	{
@@ -73,7 +73,7 @@ namespace mpMapInteractive
 		{
 			return identity;
 		}
-		return cumulativePermutations[cumulativePermutations.size()-1];
+		return *cumulativePermutations.rbegin();
 	}
 	void qtPlotData::undo()
 	{
@@ -725,7 +725,6 @@ namespace mpMapInteractive
 	}
 	void qtPlot::updateImageFromRaw()
 	{
-	
 		const std::vector<int>& permutation = data->getCurrentPermutation();
 		const std::vector<int>& groups = data->getCurrentGroups();
 		int nMarkers = data->getMarkerCount();
@@ -738,8 +737,8 @@ namespace mpMapInteractive
 		
 		//pre-cache some data, so it doesn't need to be recomputed in a deeply nested loop
 		size_t nGroups = uniqueGroups.size();
-		int* startGroups = new int[nGroups];
-		int* endGroups = new int[nGroups];
+		std::vector<int> startGroups(nGroups);
+		std::vector<int> endGroups(nGroups);
 		std::vector<std::vector<int> > expectedIndices;
 		expectedIndices.resize(nGroups);
 		for(size_t i = 0; i < nGroups; i++)
@@ -766,11 +765,6 @@ namespace mpMapInteractive
 				std::set<imageTile, imageTileComparer>::const_iterator located = imageTile::find(imageTiles, rowGroup, columnGroup);
 				int startOfRowGroup = startGroups[rowGroupCounter], startOfColumnGroup = startGroups[columnGroupCounter];;
 
-				/*for(int i = 0; i != permutation.size(); i++)
-				{
-					if(groups[i] == rowGroup) expectedRowIndices.push_back(permutation[i]);
-					if(groups[i] == columnGroup) expectedColumnIndices.push_back(permutation[i]);
-				}*/
 				std::vector<int>& expectedRowIndices = expectedIndices[rowGroupCounter];
 				std::vector<int>& expectedColumnIndices = expectedIndices[columnGroupCounter];
 
@@ -847,42 +841,6 @@ delete_tile:
 			continue;
 
 		}
-		//Set up image data (accounting for padding
-		/*		
-		#pragma omp parallel for
-		for(int i = 0; i < nMarkers; i++)
-		{
-			uchar* rawData = image->scanLine(i);
-			for(int j = 0; j < nMarkers; j++)
-			{
-				rawData[j] = originalDataToChar[permutation[i] * nMarkers + permutation[j]];
-			}
-		}*/
-		//convert to pixmap
-		//QPixmap totalPixmap = QPixmap::fromImage(*image);
-		//pixmapItem = graphicsScene->addPixmap(totalPixmap);
-		//pixmapItem->setZValue(0);
-
-		//Add transparency / highlighting of different groups
-		/*QColor whiteColour("white");
-		whiteColour.setAlphaF(0.4);
-		QBrush whiteBrush(whiteColour);
-		for(int i = 0; i < nGroups; i++)
-		{
-			int startGroup1 = startGroups[i];
-			int endGroup1 = endGroups[i];
-			for(int j = 0; j < nGroups; j++)
-			{
-				int startGroup2 = startGroups[j];
-				int endGroup2 = endGroups[j];
-				if(i %2 == j %2)
-				{
-					transparency.push_back(graphicsScene->addRect(startGroup1, startGroup2, endGroup1 - startGroup1, endGroup2 - startGroup2, QPen(Qt::NoPen), whiteBrush));
-				}
-			}
-		}*/
-		delete[] startGroups;
-		delete[] endGroups;
 		setBoundingBox(nMarkers);
 		//signal redraw
 		graphicsScene->update();
@@ -900,15 +858,15 @@ delete_tile:
 	}
 	void qtPlot::doImputation(int group)
 	{
-		//a vector of linkage groups, which assigns a group to EVERY MARKER ORIGINALLY PRESENT
+		//Conustruct a vector of linkage groups (newGroups) which assigns a group to EVERY MARKER ORIGINALLY PRESENT
 		const std::vector<int>& oldGroups = data->getCurrentGroups();
 		int additionalGroupNumber = *std::max_element(oldGroups.begin(), oldGroups.end()) + 1;
 		std::vector<int> newGroups(nOriginalMarkers, additionalGroupNumber);
 		const std::vector<int>& currentPermutation = data->getCurrentPermutation();
 		for(size_t i = 0; i < currentPermutation.size(); i++) newGroups[currentPermutation[i]] = oldGroups[i];
-		std::string error;
 
-		bool ok = impute(imputedRawImageData, NULL, NULL, nOriginalMarkers, &(newGroups[0]), group, error);
+		std::string error;
+		bool ok = impute(imputedRawImageData, levels, NULL, NULL, nOriginalMarkers, newGroups, group, error);
 		if(!ok) throw std::runtime_error("Imputation failed!");
 	}
 	void qtPlot::keyPressEvent(QKeyEvent* event)
@@ -964,8 +922,8 @@ delete_tile:
 							}
 
 							//do the imputation again - If groups have been joined then we could end up with NAs in the recombination fraction matrix. Remember that the imputation only removes NAs between markers IN THE SAME GROUP, using the group structure as currently set. We need to assign a group to EVERY marker that was ORIGINALLY here. So everything that has been deleted, and therefore doesn't have a group, goes in (max(group) + 1). 
-							if(imputedRawImageData == NULL) imputedRawImageData = new double[nOriginalMarkers * nOriginalMarkers];
-							memcpy(imputedRawImageData, rawImageData, sizeof(double)*nOriginalMarkers * nOriginalMarkers);
+							if(imputedRawImageData == NULL) imputedRawImageData = new unsigned char[(nOriginalMarkers * (nOriginalMarkers + 1))/2];
+							memcpy(imputedRawImageData, rawImageData, sizeof(unsigned char)*(nOriginalMarkers * (nOriginalMarkers + 1))/2);
 							for(std::vector<int>::iterator group = uniqueGroups.begin(); group != uniqueGroups.end(); group++)
 							{
 								if(std::find(exceptionsList.begin(), exceptionsList.end(), *group) == exceptionsList.end()) doImputation(*group);
@@ -988,7 +946,7 @@ delete_tile:
 								{
 									//get out the permutation that is going to be applied just to this bit
 									std::vector<int> resultingPermutation;
-									order(imputedRawImageData, nOriginalMarkers, currentPermutation, startOfGroup, endOfGroup, resultingPermutation);
+									order(imputedRawImageData, levels, nOriginalMarkers, currentPermutation, startOfGroup, endOfGroup, resultingPermutation);
 								
 									//extend this to a permutation that will be applied to the whole matrix
 									std::vector<int> totalResultingPermutation;

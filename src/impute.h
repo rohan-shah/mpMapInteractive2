@@ -3,5 +3,6 @@
 #include <sstream>
 #include "impute.h"
 #include <limits>
-bool impute(double* theta, double* lod, double* lkhd, int nMarkers, int* groups, int group, std::string& error);
+#include <vector>
+bool impute(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, int nMarkers, std::vector<int>& groups, int group, std::string& error);
 #endif

@@ -10,7 +10,7 @@
 		libPaths <- gsub("\"", "\\\"", libPaths, fixed=TRUE)
 		Sys.setenv("TESTING_MPMAP_INTERACTIVE_CAN_LOAD"="TRUE")
 #This hideous complexity is because if there's no graphics then the shared library loading terminates with a SIGABRT. In this case bash adds its own error output which escapes from the attempt by R to catch all output (>/dev/null 2>&1. So that command has to be run in a subshell which returns a different code (1 in this case)
-		command <- paste0("((", executable, " -e ", "\"library(mpMapInteractive, lib.loc=", libPaths,")\"", " ) || false) >/dev/null 2>&1")
+		command <- paste0("((", executable, " -e ", "\"library(mpMapInteractive2, lib.loc=", libPaths,")\"", " ) || false) >/dev/null 2>&1")
 		suppressWarnings(result <- system(command, intern=FALSE, ignore.stdout=FALSE, ignore.stderr=FALSE, wait=TRUE))
 		Sys.unsetenv("TESTING_MPMAP_INTERACTIVE_CAN_LOAD")
 		if(result != 0)
@@ -20,12 +20,16 @@
 		}
 	}
 
-	couldLoad <- try(library.dynam(package="mpMapInteractive", chname="mpMapInteractive", lib.loc = .libPaths(), now=FALSE), silent=TRUE)
+	couldLoad <- try(library.dynam(package="mpMapInteractive2", chname="mpMapInteractive2", lib.loc = .libPaths(), now = FALSE), silent=TRUE)
 	wd <- getwd()
 	if(class(couldLoad) != "try-error")
 	{
 		setwd(dirname(couldLoad[["path"]]))
-		.Call("loadQT", PACKAGE="mpMapInteractive")
+		.Call("loadQT", PACKAGE="mpMapInteractive2")
 		setwd(wd)
+	}
+	else
+	{
+		cat(couldLoad)
 	}
 }

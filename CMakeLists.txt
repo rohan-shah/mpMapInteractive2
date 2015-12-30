@@ -1,4 +1,4 @@
-project(mpMapInteractive)
+project(mpMapInteractive2)
 cmake_minimum_required(VERSION 3.0)
 option(USE_CUSTOM_RCPP "Use custom Rcpp package" ON)
 

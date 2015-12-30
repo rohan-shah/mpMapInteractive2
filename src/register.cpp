@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include "interface.h"
+#include <internal.h>
 #include "loadQt.h"
 extern "C"
 {
@@ -9,7 +10,7 @@ extern "C"
 		{"loadQT", (DL_FUNC)&loadQT, 0},
 		{NULL, NULL, 0}
 	};
-	RcppExport void R_init_mpMapInteractive(DllInfo *info)
+	RcppExport void R_init_mpMapInteractive2(DllInfo *info)
 	{
 		std::vector<R_CallMethodDef> callMethodsVector;
 		R_CallMethodDef* mpMapInteractiveCallMethods = callMethods;
