@@ -20,7 +20,7 @@
 		}
 	}
 
-	couldLoad <- try(library.dynam(package="mpMapInteractive", chname="mpMapInteractive", lib.loc = .libPaths()), silent=TRUE)
+	couldLoad <- try(library.dynam(package="mpMapInteractive", chname="mpMapInteractive", lib.loc = .libPaths(), now=FALSE), silent=TRUE)
 	wd <- getwd()
 	if(class(couldLoad) != "try-error")
 	{
