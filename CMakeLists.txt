@@ -8,7 +8,7 @@ if(USE_CUSTOM_RCPP)
 	find_package(Rcpp REQUIRED)
 endif()
 
-set(RFiles onLoad.R qtPlot.R Rcpp_exceptions.R)
+set(RFiles onLoad.R mpMapInteractive2.R Rcpp_exceptions.R)
 
 #This is the target that copies the NAMESPACE, DESCRIPTION and R files to the binary directory
 add_custom_target(copyPackage ALL)

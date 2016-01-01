@@ -76,9 +76,19 @@ extern "C"
 		{
 			groups = Rcpp::as<std::vector<int> >(lg.slot("groups"));
 		}
-		catch(Rcpp::not_compatible&)
+		catch(...)
 		{
 			throw Rcpp::not_compatible("Input mpcross@lg@groups must be an integer vector");
+		}
+
+		std::vector<int> allGroups;
+		try
+		{
+			allGroups = Rcpp::as<std::vector<int> >(lg.slot("allGroups"));
+		}
+		catch(...)
+		{
+			throw Rcpp::not_compatible("Input mpcross@lg@allGroups must be an integer vector");
 		}
 		
 		Rcpp::RawVector thetaData;
@@ -137,6 +147,24 @@ extern "C"
 			auxRows = auxillaryNumeric.nrow();
 			auxillaryPointer = &(auxillaryNumeric(0,0));
 		}
+		//Check that every group is represented as a contiguous chunk of markers.
+		for(std::vector<int>::iterator currentGroup = allGroups.begin(); currentGroup != allGroups.end(); currentGroup++)
+		{
+			std::vector<int>::iterator startOfGroup = std::find(groups.begin(), groups.end(), *currentGroup);
+			std::vector<int>::reverse_iterator endOfGroupReverse = std::find(groups.rbegin(), groups.rend(), *currentGroup);
+			if(startOfGroup != groups.end() && endOfGroupReverse != groups.rend())
+			{
+				std::vector<int>::iterator endOfGroup = endOfGroupReverse.base();
+				for(std::vector<int>::iterator current = startOfGroup; current != endOfGroup; current++)
+				{
+					if(*current != *currentGroup)
+					{
+						throw std::runtime_error("Markers for at least one linkage group were non-contiguous");
+					}
+				}
+			}
+		}
+
 		//Show qt application
 		int argc = 1;
 		char* argv[3];

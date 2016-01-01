@@ -9,7 +9,7 @@ Description: This package provides interactive plotting functions for the mpMap2
 License: GPL v3
 Collate:
    'onLoad.R'
-   'qtPlot.R'
+   'mpMapInteractive2.R'
    'Rcpp_exceptions.R'
 Depends:
     seriation,

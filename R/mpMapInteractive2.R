@@ -1,4 +1,4 @@
-qtPlot <- function(mpcross, auxillaryNumeric = NULL)
+mpMapInteractive2 <- function(mpcross, auxillaryNumeric = NULL)
 {
 	if(!isS4(mpcross))
 	{
@@ -28,7 +28,22 @@ qtPlot <- function(mpcross, auxillaryNumeric = NULL)
 			stop("Column names of auxillaryNumeric did not match up with marker names of mpcross")
 		}
 	}
-	result <- .Call("qtPlotMpMap2", mpcross, auxillaryNumeric, PACKAGE="mpMapInteractive2")
+	continguous <- TRUE
+	for(group in mpcross@lg@allGroups)
+	{
+		groupMarkers <- which(mpcross@lg@groups == group)
+		if(any(diff(sort(groupMarkers)) != 1))
+		{
+			contiguous <- FALSE
+			break
+		}
+	}
+	if(!contiguous)
+	{
+		warning("Markers for at least one linkage group were non-contiguous. Markers will be re-ordered so that linkage groups are in contiguous chunks")
+		mpcross <- subset(mpcross, markers = order(mpcross@lg@groups))
+	}
+	result <- .Call("mpMapInteractive2", mpcross, auxillaryNumeric, PACKAGE="mpMapInteractive2")
 	markerNames <- result[[1]]
 	groups <- result[[2]]
 	names(groups) <- markerNames
