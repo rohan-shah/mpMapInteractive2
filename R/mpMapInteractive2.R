@@ -28,7 +28,7 @@ mpMapInteractive2 <- function(mpcross, auxillaryNumeric = NULL)
 			stop("Column names of auxillaryNumeric did not match up with marker names of mpcross")
 		}
 	}
-	continguous <- TRUE
+	contiguous <- TRUE
 	for(group in mpcross@lg@allGroups)
 	{
 		groupMarkers <- which(mpcross@lg@groups == group)

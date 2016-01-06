@@ -31,33 +31,24 @@ namespace mpMapInteractive
 		{
 			Rcpp::RObject distSubMatrix = asDist(Rcpp::Named("m") = subMatrix);
 
-			std::string methods[6] = {"TSP", "OLO", "ARSA", "MDS", "GW", "HC"};
 			Rcpp::List nRepsControl = Rcpp::List::create(Rcpp::Named("nreps") = 5);
-			std::vector<std::vector<int> > methodResults;
-			std::vector<double> objectiveFunctionValues;
-
-			for(int methodIndex = 0; methodIndex < 6; methodIndex++)
-			{
-				Rcpp::RObject result;
-				if(methods[methodIndex] == "ARSA")
-				{
-					result = seriate(Rcpp::Named("x") = distSubMatrix, Rcpp::Named("method") = methods[methodIndex], Rcpp::Named("control") = nRepsControl);
-				}
-				else result = seriate(Rcpp::Named("x") = distSubMatrix, Rcpp::Named("method") = methods[methodIndex]);
-				std::vector<int> currentMethodResult = Rcpp::as<std::vector<int> >(getOrder(result));
-				methodResults.push_back(currentMethodResult);
-
-				Rcpp::NumericVector criterionResult = criterion(Rcpp::Named("x") = distSubMatrix, Rcpp::Named("order") = result, Rcpp::Named("method") = "AR_events");
-				objectiveFunctionValues.push_back(Rcpp::as<double>(criterionResult));
-			}
+			Rcpp::RObject result = seriate(Rcpp::Named("x") = distSubMatrix, Rcpp::Named("method") = "ARSA", Rcpp::Named("control") = nRepsControl);
+			std::vector<int> arsaResult = Rcpp::as<std::vector<int> >(getOrder(result));
+			double arsaCriterionResult = Rcpp::as<double>(criterion(Rcpp::Named("x") = distSubMatrix, Rcpp::Named("order") = result, Rcpp::Named("method") = "AR_events"));
 
 			//now consider identity permutation
-			std::vector<int> identity; 
-			for(int i = 0; i < nSubMarkers; i++) identity.push_back(i+1);
-			methodResults.push_back(identity);
-			objectiveFunctionValues.push_back(Rcpp::as<double>(criterion(Rcpp::Named("x") = distSubMatrix, Rcpp::Named("method") = "AR_events")));
+			double identityCriterionResult = Rcpp::as<double>(criterion(Rcpp::Named("x") = distSubMatrix, Rcpp::Named("method") = "AR_events"));
 
-			resultingPermutation = methodResults[std::distance(objectiveFunctionValues.begin(), std::min_element(objectiveFunctionValues.begin(), objectiveFunctionValues.end()))];
+			if(arsaCriterionResult < identityCriterionResult)
+			{
+				resultingPermutation.swap(arsaResult);
+			}
+			else
+			{
+				std::vector<int> identity; 
+				for(int i = 0; i < nSubMarkers; i++) identity.push_back(i+1);
+				resultingPermutation.swap(identity);
+			}
 			//Permutation stuff in R is indexed at base 1, but we want it indexed starting at 0.
 			for(int i = 0; i < nSubMarkers; i++) resultingPermutation[i] -= 1;
 		}
