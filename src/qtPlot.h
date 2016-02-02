@@ -132,5 +132,7 @@ namespace mpMapInteractive
 		QGraphicsRectItem* transparency;
 
 		QLineEdit* orderAllExcept;
+	public:
+		bool (*imputeFunction)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error);
 	};
 }

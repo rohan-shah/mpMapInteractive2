@@ -20,7 +20,6 @@
 #include "order.h"
 #include <stdexcept>
 #include <cmath>
-#include "impute.h"
 namespace mpMapInteractive
 {
 	int qtPlotData::getMarkerCount() const
@@ -858,15 +857,22 @@ delete_tile:
 	}
 	void qtPlot::doImputation(int group)
 	{
-		//Conustruct a vector of linkage groups (newGroups) which assigns a group to EVERY MARKER ORIGINALLY PRESENT
+		//Construct a vector of linkage groups (newGroups) which assigns a group to EVERY MARKER ORIGINALLY PRESENT
 		const std::vector<int>& oldGroups = data->getCurrentGroups();
 		int additionalGroupNumber = *std::max_element(oldGroups.begin(), oldGroups.end()) + 1;
 		std::vector<int> newGroups(nOriginalMarkers, additionalGroupNumber);
 		const std::vector<int>& currentPermutation = data->getCurrentPermutation();
 		for(size_t i = 0; i < currentPermutation.size(); i++) newGroups[currentPermutation[i]] = oldGroups[i];
 
+
+		std::vector<int> markersInRelevantGroup;
+		for (std::size_t i = 0; i < newGroups.size(); i++)
+		{
+			if (newGroups[i] == group) markersInRelevantGroup.push_back((int)i);
+		}
+
 		std::string error;
-		bool ok = impute(imputedRawImageData, levels, NULL, NULL, nOriginalMarkers, newGroups, group, error);
+		bool ok = imputeFunction(imputedRawImageData, levels, NULL, NULL, markersInRelevantGroup, error);
 		if(!ok) throw std::runtime_error("Imputation failed!");
 	}
 	void qtPlot::keyPressEvent(QKeyEvent* event)

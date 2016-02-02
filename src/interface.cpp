@@ -174,6 +174,9 @@ extern "C"
 		argv[0][0] = argv[1][0] = argv[2][0] = 0;
 		QApplication app(argc, argv);
 		mpMapInteractive::qtPlot plot(&(thetaData(0)), thetaLevelsVector, groups, markerNames, auxillaryPointer, auxRows);
+		DL_FUNC imputeFunction = R_GetCCallable("mpMap2", "impute");
+		if (imputeFunction == NULL) throw std::runtime_error("Unable to access imputation function of package mpMap2");
+		plot.imputeFunction = (bool (*)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error))imputeFunction;
 		plot.show();
 		app.exec();
 
