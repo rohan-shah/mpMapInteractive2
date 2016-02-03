@@ -84,6 +84,8 @@ if(APPLE)
 	set_target_properties(mpMapInteractive2 PROPERTIES SUFFIX ".so")
 endif()
 target_link_libraries(mpMapInteractive2 PRIVATE Qt5::Core Qt5::Widgets)
+set_property(TARGET mpMapInteractive2 PROPERTY CXX_STANDARD 11)
+set_property(TARGET mpMapInteractive2 PROPERTY CXX_STANDARD_REQUIRED ON)
 
 if(USE_CUSTOM_RCPP)
 	target_link_libraries(mpMapInteractive2 PRIVATE Rcpp)

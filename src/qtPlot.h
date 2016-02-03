@@ -9,6 +9,7 @@
 #include <set>
 #include "imageTileComparer.h"
 #include "imageTile.h"
+#include <functional>
 namespace mpMapInteractive
 {
 	struct qtPlotData
@@ -133,6 +134,6 @@ namespace mpMapInteractive
 
 		QLineEdit* orderAllExcept;
 	public:
-		bool (*imputeFunction)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error);
+		bool (*imputeFunction)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction);
 	};
 }

@@ -145,7 +145,7 @@ namespace mpMapInteractive
 	}
 	void qtPlot::initialiseImageData(int nMarkers)
 	{
-		originalDataToChar.resize((nMarkers * (nMarkers+1))/2);
+		originalDataToChar.resize(((unsigned long long)nMarkers * ((unsigned long long)nMarkers+1ULL))/2ULL);
 		//Conversion vector from levels to colours. Filled with the NA colour. 
 		std::vector<uchar> levelToChar(0xff+1, nColours);
 		for(int i = 0; i < levels.size(); i++)
@@ -153,7 +153,7 @@ namespace mpMapInteractive
 			levelToChar[i] = (uchar)std::floor(0.5f + (nColours - 1)* levels[i] / 0.5);
 		}
 		//scale data from float to integer
-		for(int i = 0; i < (nMarkers*(nMarkers+1))/2; i++)
+		for(unsigned long long i = 0; i < ((unsigned long long)nMarkers*((unsigned long long)nMarkers+1ULL))/2ULL; i++)
 		{
 			originalDataToChar[i] = levelToChar[rawImageData[i]];
 		}
@@ -872,7 +872,8 @@ delete_tile:
 		}
 
 		std::string error;
-		bool ok = imputeFunction(imputedRawImageData, levels, NULL, NULL, markersInRelevantGroup, error);
+		std::function<void(unsigned long, unsigned long)> progressFunction = [](unsigned long, unsigned long){};
+		bool ok = imputeFunction(imputedRawImageData, levels, NULL, NULL, markersInRelevantGroup, error, progressFunction);
 		if(!ok) throw std::runtime_error("Imputation failed!");
 	}
 	void qtPlot::keyPressEvent(QKeyEvent* event)
