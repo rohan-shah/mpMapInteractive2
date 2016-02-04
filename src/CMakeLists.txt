@@ -86,6 +86,10 @@ endif()
 target_link_libraries(mpMapInteractive2 PRIVATE Qt5::Core Qt5::Widgets)
 set_property(TARGET mpMapInteractive2 PROPERTY CXX_STANDARD 11)
 set_property(TARGET mpMapInteractive2 PROPERTY CXX_STANDARD_REQUIRED ON)
+#The CXX_STANDARD doesn't seem to work for intel, so add this manually.
+if(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+	target_compile_options(mpMapInteractive2 PUBLIC "-std=c++11")
+endif()
 
 if(USE_CUSTOM_RCPP)
 	target_link_libraries(mpMapInteractive2 PRIVATE Rcpp)
