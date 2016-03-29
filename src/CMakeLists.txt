@@ -75,8 +75,8 @@ endif()
 find_package(Qt5 COMPONENTS Widgets Core Gui REQUIRED)
 
 #Now add the shared library target
-set(SourceFiles colour.cpp imageTile.cpp imageTileComparer.cpp interface.cpp order.cpp qtPlot.cpp register.cpp ZoomGraphicsView.cpp loadQt.cpp)
-set(HeaderFiles colour.h imageTile.h imageTileComparer.h interface.h order.h qtPlot.h ZoomGraphicsView.h loadQt.h)
+set(SourceFiles colour.cpp imageTile.cpp imageTileComparer.cpp interface.cpp order.cpp qtPlot.cpp register.cpp ZoomGraphicsView.cpp loadQt.cpp qtPlotData.cpp)
+set(HeaderFiles colour.h imageTile.h imageTileComparer.h interface.h order.h qtPlot.h ZoomGraphicsView.h loadQt.h qtPlotData.h)
 qt5_wrap_cpp(mpMapInteractive2_MOC_SOURCES ZoomGraphicsView.h qtPlot.h)
 add_library(mpMapInteractive2 SHARED ${SourceFiles} ${HeaderFiles} ${mpMapInteractive2_MOC_SOURCES})
 if(APPLE)
