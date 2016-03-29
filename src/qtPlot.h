@@ -45,7 +45,7 @@ namespace mpMapInteractive
 		Q_OBJECT
 	public:
 		~qtPlot();
-		qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& groups, const std::vector<std::string>& markerNames, double* auxData, int auxRows);
+		qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& groups, const std::vector<std::string>& markerNames, double* auxData, int auxRows, unsigned char* imputedRawImageData);
 		const qtPlotData& getData();
 	protected:
 		void closeEvent(QCloseEvent* event);

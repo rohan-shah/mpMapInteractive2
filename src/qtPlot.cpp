@@ -311,8 +311,8 @@ namespace mpMapInteractive
 		bounding.setHeight(nMarkers + nMarkers/10.0);
 		graphicsView->setSceneRect(bounding);
 	}
-	qtPlot::qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames, double* auxData, int auxRows)
-		:currentMode(Groups), horizontalGroup(-1), verticalGroup(-1), horizontalHighlight(NULL), verticalHighlight(NULL), intervalHighlight(NULL), singleHighlight(NULL), data(new qtPlotData(originalGroups, originalMarkerNames)), nOriginalMarkers((int)originalGroups.size()), rawImageData(rawImageData), imputedRawImageData(NULL), levels(levels), isFullScreen(false), highlightColour("blue"), startIntervalPos(-1), singleModePos(-1), auxData(auxData), auxRows(auxRows), computationMutex(QMutex::NonRecursive), transparency(NULL), orderAllExcept(NULL)
+	qtPlot::qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames, double* auxData, int auxRows, unsigned char* imputedRawImageData)
+		:currentMode(Groups), horizontalGroup(-1), verticalGroup(-1), horizontalHighlight(NULL), verticalHighlight(NULL), intervalHighlight(NULL), singleHighlight(NULL), data(new qtPlotData(originalGroups, originalMarkerNames)), nOriginalMarkers((int)originalGroups.size()), rawImageData(rawImageData), imputedRawImageData(imputedRawImageData), levels(levels), isFullScreen(false), highlightColour("blue"), startIntervalPos(-1), singleModePos(-1), auxData(auxData), auxRows(auxRows), computationMutex(QMutex::NonRecursive), transparency(NULL), orderAllExcept(NULL)
 	{
 		highlightColour.setAlphaF(0.3);
 		int nMarkers = (int)originalGroups.size();

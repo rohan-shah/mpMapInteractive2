@@ -112,6 +112,25 @@ extern "C"
 		}
 		std::vector<double> thetaLevelsVector = Rcpp::as<std::vector<double> >(thetaLevels);
 
+		unsigned char* imputedRawImageData = NULL;
+		if(allGroups.size() == 1)
+		{
+			Rcpp::RObject imputedThetaObj = lg.slot("imputedTheta");
+			if(!imputedThetaObj.isNULL())
+			{
+				try
+				{
+					Rcpp::List imputedTheta = Rcpp::as<Rcpp::List>(imputedThetaObj);
+					Rcpp::S4 imputedThetaMatrix = Rcpp::as<Rcpp::S4>(imputedTheta(0));
+					Rcpp::RawVector data = Rcpp::as<Rcpp::RawVector>(imputedThetaMatrix.slot("data"));
+					imputedRawImageData = new unsigned char[data.size()];
+					memcpy(imputedRawImageData, &(data(0)), sizeof(unsigned char)*data.size());
+				}
+				catch(...)
+				{}
+			}
+		}
+
 		//check the auxillary numeric matrix
 		double* auxillaryPointer = NULL;
 		int auxRows = 0;
@@ -173,7 +192,7 @@ extern "C"
 		argv[2] = new char[1];
 		argv[0][0] = argv[1][0] = argv[2][0] = 0;
 		QApplication app(argc, argv);
-		mpMapInteractive::qtPlot plot(&(thetaData(0)), thetaLevelsVector, groups, markerNames, auxillaryPointer, auxRows);
+		mpMapInteractive::qtPlot plot(&(thetaData(0)), thetaLevelsVector, groups, markerNames, auxillaryPointer, auxRows, imputedRawImageData);
 		DL_FUNC imputeFunction = R_GetCCallable("mpMap2", "impute");
 		if (imputeFunction == NULL) throw std::runtime_error("Unable to access imputation function of package mpMap2");
 		plot.imputeFunction = (bool (*)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction))imputeFunction;
