@@ -11,61 +11,53 @@
 #include "imageTile.h"
 #include <functional>
 #include "qtPlotData.h"
+class QProgressBar;
 namespace mpMapInteractive
 {
 	enum plotMode
 	{
 		Groups, Interval, Single
 	};
+	struct singleMode;
+	struct intervalMode;
+	struct groupsMode;
+	struct plotModeObject;
 	class qtPlot : public QMainWindow
 	{
 		Q_OBJECT
 	public:
 		~qtPlot();
 		qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& groups, const std::vector<std::string>& markerNames, double* auxData, int auxRows, unsigned char* imputedRawImageData);
-		const qtPlotData& getData();
+		QGraphicsView& getGraphicsView();
+		void signalMouseMove();
+		QGraphicsScene& getGraphicsScene();
+		bool attemptBeginComputation();
+		void endComputation();
+		qtPlotData& getData();
+		void dataChanged();
+		QProgressBar* addProgressBar();
+		void deleteProgressBar(QProgressBar*);
 	protected:
 		void closeEvent(QCloseEvent* event);
 		void keyPressEvent(QKeyEvent* event);
 		bool eventFilter(QObject *obj, QEvent *event);
 	public slots:
-		void group1ReturnPressed();
-		void group2ReturnPressed();
 		void graphicsLeaveEvent(QEvent*);
 		void modeChanged(const QString&);
 	private:
 		void setBoundingBox(int nMarkers);
 		void doImputation(int group);
-
-		void setIntervalHighlighting(int start, int end);
-		void deleteIntervalHighlighting();
-
-		void setSingleHighlighting(int pos);
-		void deleteSingleHighlighting();
-		
-		void deleteGroupsHighlighting();
-		void renewGroupsHighlighting(int x, int y);
-		void signalMouseMove();
 		void graphicsMouseMove(QPointF scenePos);
 		
 		plotMode currentMode;
 		
-		QFrame* addIntervalMode();
 		QFrame* createMode();
 		QWidget* addLeftSidebar();
-		QFrame* addGroupsMode();
-		QFrame* addSingleMode();
 
 		void initialiseImageData(int nMarkers);
 		void addStatusBar();
-		void joinGroups(int x, int y);
-		void undo();
 		void updateImageFromRaw();
-		void applyPermutation(const std::vector<int>& permutation, const std::vector<int>& newGroups);
 		//The previously highlighted horizontal and vertical group
-		int horizontalGroup, verticalGroup;
-		QGraphicsRectItem* horizontalHighlight, *verticalHighlight;
-		QGraphicsRectItem* intervalHighlight;
 		QGraphicsRectItem* singleHighlight;
 		//Some functions make structural changes to this. So to update the data set we just switch out this data object for a new one, which is an atomic operation. And functions that depend on the 
 		//data make a copy and use that. 
@@ -82,15 +74,6 @@ namespace mpMapInteractive
 		QGraphicsScene* graphicsScene;
 		std::set<imageTile, imageTileComparer> imageTiles;
 		std::vector<uchar> originalDataToChar;
-		QLabel* joinGroupsLabel;
-		QLineEdit* group1Edit;
-		QLineEdit* group2Edit;
-		QFrame* groupsModeWidget;
-		QFrame* intervalModeWidget;
-		QFrame* singleModeWidget;
-		QColor highlightColour;
-		int startIntervalPos, endIntervalPos;
-		int singleModePos;
 		QStatusBar* statusBar;
 
 		//related to auxillary numeric data to be shown in status bar
@@ -103,13 +86,13 @@ namespace mpMapInteractive
 		//call the ordering code again internally (from inside the first ordering computation). This is bade. 
 		//We only want to be doing one bit of computation at a time. 
 		QMutex computationMutex;
-		bool attemptBeginComputation();
-		void endComputation();
-		
 		
 		QGraphicsRectItem* transparency;
 
-		QLineEdit* orderAllExcept;
+		QSharedPointer<plotModeObject> currentModeObject;
+		QSharedPointer<groupsMode> groupsMode;
+		QSharedPointer<intervalMode> intervalMode;
+		QSharedPointer<singleMode> singleMode;
 	public:
 		bool (*imputeFunction)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction);
 	};

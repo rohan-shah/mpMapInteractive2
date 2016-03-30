@@ -3,6 +3,10 @@
 #include <stdexcept>
 namespace mpMapInteractive
 {
+	int qtPlotData::getOriginalMarkerCount() const
+	{
+		return (int)originalGroups.size();
+	}
 	int qtPlotData::getMarkerCount() const
 	{
 		if(cumulativePermutations.size() == 0)

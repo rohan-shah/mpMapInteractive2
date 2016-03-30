@@ -75,9 +75,9 @@ endif()
 find_package(Qt5 COMPONENTS Widgets Core Gui REQUIRED)
 
 #Now add the shared library target
-set(SourceFiles colour.cpp imageTile.cpp imageTileComparer.cpp interface.cpp order.cpp qtPlot.cpp register.cpp ZoomGraphicsView.cpp loadQt.cpp qtPlotData.cpp)
-set(HeaderFiles colour.h imageTile.h imageTileComparer.h interface.h order.h qtPlot.h ZoomGraphicsView.h loadQt.h qtPlotData.h)
-qt5_wrap_cpp(mpMapInteractive2_MOC_SOURCES ZoomGraphicsView.h qtPlot.h)
+set(SourceFiles colour.cpp imageTile.cpp imageTileComparer.cpp interface.cpp order.cpp qtPlot.cpp register.cpp ZoomGraphicsView.cpp loadQt.cpp qtPlotData.cpp intervalMode.cpp groupsMode.cpp singleMode.cpp)
+set(HeaderFiles colour.h imageTile.h imageTileComparer.h interface.h order.h qtPlot.h ZoomGraphicsView.h loadQt.h qtPlotData.h plotModeObject.h intervalMode.h singleMode.h groupsMode.h)
+qt5_wrap_cpp(mpMapInteractive2_MOC_SOURCES ZoomGraphicsView.h qtPlot.h plotModeObject.h)
 add_library(mpMapInteractive2 SHARED ${SourceFiles} ${HeaderFiles} ${mpMapInteractive2_MOC_SOURCES})
 if(APPLE)
 	#R still expects a .so on OSX, instead of the standard .dynlib

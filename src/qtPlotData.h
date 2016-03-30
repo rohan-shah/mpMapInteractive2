@@ -1,3 +1,5 @@
+#ifndef QT_PLOT_DATA_HEADER_GUARD
+#define QT_PLOT_DATA_HEADER_GUARD
 #include <vector>
 #include <string>
 namespace mpMapInteractive
@@ -14,6 +16,7 @@ namespace mpMapInteractive
 		void undo();
 		bool singleGroup();
 		int getMarkerCount() const;
+		int getOriginalMarkerCount() const;
 	private:
 		qtPlotData(){};
 		
@@ -27,3 +30,4 @@ namespace mpMapInteractive
 		std::vector<int> identity;
 	};
 }
+#endif
