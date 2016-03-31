@@ -7,8 +7,9 @@ class QGraphicsRectItem;
 class QFrame;
 namespace mpMapInteractive
 {
-	struct groupsMode : public plotModeObject
+	struct groupsMode : public QObject, public plotModeObject
 	{
+		Q_OBJECT
 	public slots:
 		void group1ReturnPressed();
 		void group2ReturnPressed();

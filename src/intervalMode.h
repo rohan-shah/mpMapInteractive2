@@ -8,7 +8,9 @@ namespace mpMapInteractive
 	public:
 		intervalMode(qtPlot* plotObject, qtPlotData& data, unsigned char** imputedRawData, unsigned char* rawImageData, plotModeObject::imputeFunctionType imputeFunction, std::vector<double>& levels)
 			: plotModeObject(plotObject, data, imputedRawData, rawImageData, imputeFunction, levels), highlight(NULL), start(-1), end(-1)
-		{}
+		{
+			constructFrame();
+		}
 		virtual void mouseMove(int x, int y);
 		virtual void leaveMode();
 		virtual void enterMode();

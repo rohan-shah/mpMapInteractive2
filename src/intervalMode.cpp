@@ -32,6 +32,17 @@ namespace mpMapInteractive
 
 		frame->setLayout(formLayout);
 	}
+	void intervalMode::deleteHighlighting()
+	{
+		if(highlight != NULL)
+		{
+			QGraphicsScene& graphicsScene = plotObject->getGraphicsScene();
+			graphicsScene.removeItem(static_cast<QGraphicsItem*>(highlight));
+			delete highlight;
+			highlight = NULL;
+			graphicsScene.update();
+		}
+	}
 	void intervalMode::addHighlighting()
 	{
 		deleteHighlighting();
@@ -46,9 +57,12 @@ namespace mpMapInteractive
 			highlight = graphicsScene.addRect(end, 0, start - end + 1, nMarkers, QPen(Qt::NoPen), highlightColour);
 		}
 		highlight->setZValue(2);
+		graphicsScene.update();
 	}
 	void intervalMode::enterMode()
 	{
+		start = end = -1;
+		deleteHighlighting();
 		frame->show();
 	}
 	void intervalMode::leaveMode()
@@ -142,6 +156,9 @@ namespace mpMapInteractive
 				end = -1;
 			}
 		}
+	}
+	void intervalMode::mouseMove(int x, int y)
+	{
 	}
 	void intervalMode::leaveFocus()
 	{

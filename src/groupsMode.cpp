@@ -88,25 +88,27 @@ namespace mpMapInteractive
 	}
 	void groupsMode::leaveMode()
 	{
+		horizontalGroup = -1;
+		verticalGroup = -1;
 		deleteHighlighting();
+		frame->hide();
 	}
 	void groupsMode::deleteHighlighting()
 	{
 		QGraphicsScene& graphicsScene = plotObject->getGraphicsScene();
-		if(horizontalGroup != -1)
+		if(horizontalHighlight != NULL)
 		{
 			graphicsScene.removeItem(static_cast<QGraphicsItem*>(horizontalHighlight));
 			delete horizontalHighlight;
 			horizontalHighlight = NULL;
 		}
-		if(verticalGroup != -1)
+		if(verticalHighlight != NULL)
 		{
 			graphicsScene.removeItem(static_cast<QGraphicsItem*>(verticalHighlight));
 			delete verticalHighlight;
 			verticalHighlight = NULL;
 		}
-		horizontalGroup = -1;
-		verticalGroup = -1;
+		graphicsScene.update();
 	}
 	void groupsMode::mouseMove(int x, int y)
 	{
@@ -119,6 +121,8 @@ namespace mpMapInteractive
 		}
 		else
 		{
+			horizontalGroup = -1;
+			verticalGroup = -1;
 			deleteHighlighting();
 			joinGroupsLabel->setEnabled(false);
 		}
@@ -178,6 +182,8 @@ namespace mpMapInteractive
 	void groupsMode::enterMode()
 	{
 		frame->show();
+		horizontalGroup = verticalGroup = -1;
+		deleteHighlighting();
 		plotObject->signalMouseMove();
 	}
 	void groupsMode::keyPressEvent(QKeyEvent* event)
@@ -188,6 +194,8 @@ namespace mpMapInteractive
 			plotObject->dataChanged();
 			//if there's been a structural change, we HAVE to redo the highlighting, irrespective of whether the highlighted group number is the same
 			deleteHighlighting();
+			verticalGroup = -1;
+			horizontalGroup = -1;
 			plotObject->signalMouseMove();
 		}
 		if(event->key() == Qt::Key_O && (event->modifiers() & Qt::ControlModifier))
@@ -277,6 +285,9 @@ namespace mpMapInteractive
 			if(0 <= x && x < nMarkers && 0 <= y && y < nMarkers && plotObject->attemptBeginComputation())
 			{
 				joinGroups(x, y);
+				deleteHighlighting();
+				verticalGroup = -1;
+				horizontalGroup = -1;
 				renewHighlighting(x, y);
 				plotObject->endComputation();
 			}
@@ -366,5 +377,4 @@ namespace mpMapInteractive
 		data.applyPermutation(permutation, newGroups);
 		plotObject->dataChanged();
 	}
-
 }

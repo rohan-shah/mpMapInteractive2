@@ -26,8 +26,9 @@ namespace mpMapInteractive
 	{
 		Q_OBJECT
 	public:
+		typedef bool (*imputeFunctionType)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction);
 		~qtPlot();
-		qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& groups, const std::vector<std::string>& markerNames, double* auxData, int auxRows, unsigned char* imputedRawImageData);
+		qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& groups, const std::vector<std::string>& markerNames, double* auxData, int auxRows, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction);
 		QGraphicsView& getGraphicsView();
 		void signalMouseMove();
 		QGraphicsScene& getGraphicsScene();
@@ -45,6 +46,7 @@ namespace mpMapInteractive
 		void graphicsLeaveEvent(QEvent*);
 		void modeChanged(const QString&);
 	private:
+		imputeFunctionType imputeFunction;
 		void setBoundingBox(int nMarkers);
 		void doImputation(int group);
 		void graphicsMouseMove(QPointF scenePos);
@@ -90,10 +92,8 @@ namespace mpMapInteractive
 		QGraphicsRectItem* transparency;
 
 		QSharedPointer<plotModeObject> currentModeObject;
-		QSharedPointer<groupsMode> groupsMode;
-		QSharedPointer<intervalMode> intervalMode;
-		QSharedPointer<singleMode> singleMode;
-	public:
-		bool (*imputeFunction)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction);
+		QSharedPointer<groupsMode> groupsModeObject;
+		QSharedPointer<intervalMode> intervalModeObject;
+		QSharedPointer<singleMode> singleModeObject;
 	};
 }

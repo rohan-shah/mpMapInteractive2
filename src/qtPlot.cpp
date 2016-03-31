@@ -88,17 +88,17 @@ namespace mpMapInteractive
 		if(mode == "Groups")
 		{
 			currentMode = Groups;
-			currentModeObject = groupsMode;
+			currentModeObject = groupsModeObject;
 		}
 		else if(mode == "Interval")
 		{
 			currentMode = Interval;
-			currentModeObject = intervalMode;
+			currentModeObject = intervalModeObject;
 		}
 		else
 		{
 			currentMode = Single;
-			currentModeObject = singleMode;
+			currentModeObject = singleModeObject;
 		}
 		currentModeObject->enterMode();
 	}
@@ -112,9 +112,9 @@ namespace mpMapInteractive
 		
 		sidebarLayout->addWidget(modeWidget, 0, Qt::AlignTop);
 		sidebarLayout->addSpacing(1);
-		sidebarLayout->addWidget(groupsMode->frame, 1, Qt::AlignTop);
-		sidebarLayout->addWidget(intervalMode->frame, 1, Qt::AlignTop);
-		sidebarLayout->addWidget(singleMode->frame, 1, Qt::AlignTop);
+		sidebarLayout->addWidget(groupsModeObject->frame, 1, Qt::AlignTop);
+		sidebarLayout->addWidget(intervalModeObject->frame, 1, Qt::AlignTop);
+		sidebarLayout->addWidget(singleModeObject->frame, 1, Qt::AlignTop);
 		
 		leftSidebar->setLayout(sidebarLayout);
 		leftSidebar->setMinimumWidth(400);
@@ -130,8 +130,8 @@ namespace mpMapInteractive
 		bounding.setHeight(nMarkers + nMarkers/10.0);
 		graphicsView->setSceneRect(bounding);
 	}
-	qtPlot::qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames, double* auxData, int auxRows, unsigned char* imputedRawImageData)
-		:currentMode(Groups), data(new qtPlotData(originalGroups, originalMarkerNames)), nOriginalMarkers((int)originalGroups.size()), rawImageData(rawImageData), imputedRawImageData(imputedRawImageData), levels(levels), isFullScreen(false), auxData(auxData), auxRows(auxRows), computationMutex(QMutex::NonRecursive), transparency(NULL)
+	qtPlot::qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames, double* auxData, int auxRows, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction)
+		:currentMode(Groups), data(new qtPlotData(originalGroups, originalMarkerNames)), nOriginalMarkers((int)originalGroups.size()), rawImageData(rawImageData), imputedRawImageData(imputedRawImageData), levels(levels), isFullScreen(false), auxData(auxData), auxRows(auxRows), computationMutex(QMutex::NonRecursive), transparency(NULL), imputeFunction(imputeFunction)
 	{
 		int nMarkers = (int)originalGroups.size();
 		initialiseImageData(nMarkers);
@@ -158,7 +158,15 @@ namespace mpMapInteractive
 
 		addStatusBar();
 
+		groupsModeObject.reset(new mpMapInteractive::groupsMode(this, *data, &this->imputedRawImageData, rawImageData, imputeFunction, levels));
+		intervalModeObject.reset(new mpMapInteractive::intervalMode(this, *data, &this->imputedRawImageData, rawImageData, imputeFunction, levels));
+		singleModeObject.reset(new mpMapInteractive::singleMode(this, *data, &this->imputedRawImageData, rawImageData, imputeFunction, levels));
+		currentModeObject = groupsModeObject;
 		QWidget* sidebarWidget = addLeftSidebar();
+		
+		groupsModeObject->frame->hide();
+		intervalModeObject->frame->hide();
+		singleModeObject->frame->hide();
 
 		//add form layout to top level layout (same level as the graphics view)
 		topLayout->addWidget(sidebarWidget, 0);
@@ -172,10 +180,7 @@ namespace mpMapInteractive
 		topLayoutWidget->setLayout(topLayout);
 		setCentralWidget(topLayoutWidget);
 
-		groupsMode.reset(new mpMapInteractive::groupsMode(this, *data, &imputedRawImageData, rawImageData, imputeFunction, levels));
-		intervalMode.reset(new mpMapInteractive::intervalMode(this, *data, &imputedRawImageData, rawImageData, imputeFunction, levels));
-		singleMode.reset(new mpMapInteractive::singleMode(this, *data, &imputedRawImageData, rawImageData, imputeFunction, levels));
-		currentModeObject = groupsMode;
+		currentModeObject->enterMode();
 
 		graphicsView->setFocus();
 	}
@@ -455,6 +460,10 @@ delete_tile:
 	void qtPlot::closeEvent(QCloseEvent* event)
 	{
 		event->accept();
+	}
+	QGraphicsScene& qtPlot::getGraphicsScene()
+	{
+		return *graphicsScene;
 	}
 	QGraphicsView& qtPlot::getGraphicsView()
 	{

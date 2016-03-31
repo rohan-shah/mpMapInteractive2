@@ -8,7 +8,9 @@ namespace mpMapInteractive
 	public:
 		singleMode(qtPlot* plotObject, qtPlotData& data, unsigned char** imputedRawData, unsigned char* rawImageData, plotModeObject::imputeFunctionType imputeFunction, std::vector<double>& levels)
 			: plotModeObject(plotObject, data, imputedRawData, rawImageData, imputeFunction, levels), position(-1), highlight(NULL)
-		{}
+		{
+			constructFrame();
+		}
 		virtual void mouseMove(int x, int y);
 		virtual void leaveFocus();
 		virtual void leaveMode();

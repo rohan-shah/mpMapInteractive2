@@ -9,6 +9,12 @@
 #include <QGraphicsSceneMouseEvent>
 namespace mpMapInteractive
 {
+	void singleMode::enterMode()
+	{
+		deleteHighlight();
+		position = -1;
+		frame->show();
+	}
 	void singleMode::keyPressEvent(QKeyEvent* event)
 	{
 		if(event->key() == Qt::Key_Delete)
@@ -32,9 +38,17 @@ namespace mpMapInteractive
 				if(position >= nMarkers) position -= 1;
 				deleteHighlight();
 				addHighlight();
+				QGraphicsScene& graphicsScene = plotObject->getGraphicsScene();
+				graphicsScene.update();
 				plotObject->endComputation();
 			}
 		}
+	}
+	void singleMode::leaveMode()
+	{
+		frame->hide();
+		position = -1;
+		deleteHighlight();
 	}
 	void singleMode::deleteHighlight()
 	{
@@ -44,7 +58,11 @@ namespace mpMapInteractive
 			graphicsScene.removeItem(static_cast<QGraphicsItem*>(highlight));
 			delete highlight;
 			highlight = NULL;
+			graphicsScene.update();
 		}
+	}
+	void singleMode::mouseMove(int x, int y)
+	{
 	}
 	void singleMode::mousePressed(int x, int y, Qt::MouseButtons pressed)
 	{
@@ -70,6 +88,7 @@ namespace mpMapInteractive
 			QGraphicsScene& graphicsScene = plotObject->getGraphicsScene();
 			highlight = graphicsScene.addRect(position, 0, 1, nMarkers, QPen(Qt::NoPen), highlightColour);
 			highlight->setZValue(2);
+			graphicsScene.update();
 		}
 	}
 	void singleMode::leaveFocus()
@@ -93,5 +112,4 @@ namespace mpMapInteractive
 
 		frame->setLayout(formLayout);
 	}
-
 }

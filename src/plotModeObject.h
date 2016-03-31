@@ -1,6 +1,5 @@
 #ifndef QTPLOT_PLOT_MODE_OBJECT_HEADER_GUARD
 #define QTPLOT_PLOT_MODE_OBJECT_HEADER_GUARD
-#include <QObject>
 #include <QMouseEvent>
 #include <QColor>
 #include "qtPlotData.h"
@@ -9,9 +8,8 @@ class QKeyEvent;
 namespace mpMapInteractive
 {
 	class qtPlot;
-	struct plotModeObject : public QObject
+	struct plotModeObject
 	{
-		Q_OBJECT
 	public:
 		typedef bool (*imputeFunctionType)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction);
 		plotModeObject(qtPlot* plotObject, qtPlotData& data, unsigned char** imputedRawData, unsigned char* rawImageData, imputeFunctionType imputeFunction, std::vector<double>& levels)
