@@ -21,30 +21,55 @@ namespace mpMapInteractive
 	imageTile::imageTile(std::vector<uchar>& data, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene)
 	:rowIndices(rowIndices), columnIndices(columnIndices), rowGroup(rowGroup), columnGroup(columnGroup)
 	{
-		QImage* image = new QImage((int)rowIndices.size(), (int)columnIndices.size(), QImage::Format_Indexed8);
+		QImage* fullSizeImage = new QImage(subTileSize, subTileSize, QImage::Format_Indexed8);
 		//get 100 colours
 		QVector<QRgb> colours;
 		constructColourTable(nColours, colours);
-		image->setColorTable(colours);
-		
-		for(size_t j = 0; j < columnIndices.size(); j++)
-		{
-			uchar* reorderedData = image->scanLine((int)j);
-			for(size_t i = 0; i < rowIndices.size(); i++)
-			{
-				std::size_t rowIndex = rowIndices[i], columnIndex = columnIndices[j];
-				if(rowIndex > columnIndex) std::swap(rowIndex, columnIndex);
-				reorderedData[i] = data[(columnIndex*(columnIndex+1))/2 + rowIndex];
-			}
-		}
-		QPixmap pixMap = QPixmap::fromImage(*image);
-		pixMapItems.push_back(graphicsScene->addPixmap(pixMap));
-		pixMapItems[0]->setPos(QPoint(0, 0));
+		fullSizeImage->setColorTable(colours);
 
 		groupItem.reset(new QGraphicsItemGroup);
 		graphicsScene->addItem(groupItem.data());
-		groupItem->addToGroup(pixMapItems[0]);
-		delete image;
+
+		int subTileColumns = (columnIndices.size()+(subTileSize-1))/subTileSize;
+		int subTileRows = (rowIndices.size()+(subTileSize-1))/subTileSize;
+		
+		for(int subTileColumn = 0; subTileColumn < subTileColumns; subTileColumn++)
+		{
+			int subTileColumnSize = std::min((subTileColumn+1)*subTileSize, (int)columnIndices.size()) - subTileColumn*subTileSize;
+			for(int subTileRow = 0; subTileRow < subTileRows; subTileRow++)
+			{
+				int subTileRowSize = std::min((subTileRow+1)*subTileSize, (int)rowIndices.size()) - subTileRow*subTileSize;
+				bool useFullSizeImage = subTileColumnSize == subTileSize && subTileRowSize == subTileSize;
+
+				QImage* currentTileImage;
+				if(useFullSizeImage) currentTileImage = fullSizeImage;
+				else
+				{
+					currentTileImage = new QImage(subTileRowSize, subTileColumnSize, QImage::Format_Indexed8);
+					currentTileImage->setColorTable(colours);
+				}
+
+				for(size_t j = subTileColumn*subTileSize; j < std::min((subTileColumn+1)*subTileSize, (int)columnIndices.size()); j++)
+				{
+					uchar* reorderedData = currentTileImage->scanLine((int)j - subTileColumn*subTileSize);
+					for(size_t i = subTileRow*subTileSize; i < std::min((subTileRow+1)*subTileSize, (int)rowIndices.size()); i++)
+					{
+						std::size_t rowIndex = rowIndices[i], columnIndex = columnIndices[j];
+						if(rowIndex > columnIndex) std::swap(rowIndex, columnIndex);
+						reorderedData[i - subTileRow*subTileSize] = data[(columnIndex*(columnIndex+1))/2 + rowIndex];
+					}
+					
+				}
+				QPixmap pixMap = QPixmap::fromImage(*currentTileImage);
+				QGraphicsPixmapItem* newItem = graphicsScene->addPixmap(pixMap);
+				pixMapItems.push_back(newItem);
+				newItem->setPos(QPoint(subTileRow*subTileSize, subTileColumn*subTileSize));
+				groupItem->addToGroup(newItem);
+
+				if(!useFullSizeImage) delete currentTileImage;
+			}
+		}
+		delete fullSizeImage;
 	}
 	bool imageTile::checkIndices(const std::vector<int>& otherRowIndices, const std::vector<int>& otherColumnIndices) const
 	{
