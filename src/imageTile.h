@@ -12,18 +12,23 @@ namespace mpMapInteractive
 		public:
 			imageTile(std::vector<uchar>& data, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene);
 			~imageTile();
+			imageTile(imageTile&& other);
 			const std::vector<int>& getRowIndices() const;
 			const std::vector<int>& getColumnIndices() const;
 			int getRowGroup() const;
 			int getColumnGroup() const;
 			static std::set<imageTile, imageTileComparer>::const_iterator find(const std::set<imageTile, imageTileComparer>& collection, int rowGroup, int columnGroup);
-			QGraphicsPixmapItem* getItem() const;
+			QGraphicsItemGroup* getItem() const;
 			bool checkIndices(const std::vector<int>& otherRowIndices, const std::vector<int>& otherColumnIndices) const;
 		private:
+			static const int subTileSize = 500;
+			imageTile(const imageTile& other);
+			imageTile& operator=(const imageTile& other);
 			imageTile();
 			std::vector<int> rowIndices, columnIndices;
 			int rowGroup, columnGroup;
-			QSharedPointer<QGraphicsPixmapItem> pixMapItem;
+			std::vector<QGraphicsPixmapItem*> pixMapItems;
+			QSharedPointer<QGraphicsItemGroup> groupItem;
 	};
 }
 #endif

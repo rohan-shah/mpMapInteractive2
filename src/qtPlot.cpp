@@ -22,6 +22,7 @@
 #include "singleMode.h"
 #include "intervalMode.h"
 #include "groupsMode.h"
+#include <QGraphicsItemGroup>
 namespace mpMapInteractive
 {
 	qtPlot::~qtPlot()
@@ -354,8 +355,8 @@ namespace mpMapInteractive
 				located = imageTile::find(imageTiles, rowGroup, columnGroup);
 				if(located == imageTiles.end())
 				{
-					imageTile newTile = imageTile(originalDataToChar, nOriginalMarkers, rowGroup, columnGroup, expectedRowIndices, expectedColumnIndices, graphicsScene);
-					imageTiles.insert(newTile);
+					imageTile newTile(originalDataToChar, nOriginalMarkers, rowGroup, columnGroup, expectedRowIndices, expectedColumnIndices, graphicsScene);
+					imageTiles.insert(std::move(newTile));
 				}
 				//set position
 				located = imageTile::find(imageTiles, rowGroup, columnGroup);
@@ -363,7 +364,7 @@ namespace mpMapInteractive
 				{
 					throw std::runtime_error("Internal error");
 				}
-				QGraphicsPixmapItem* currentItem = located->getItem();
+				QGraphicsItemGroup* currentItem = located->getItem();
 				currentItem->setPos(startOfRowGroup, startOfColumnGroup);
 			}
 		}
@@ -393,7 +394,7 @@ namespace mpMapInteractive
 					}*/
 					if(!currentTile->checkIndices(expectedRowIndices, expectedColumnIndices)) goto delete_tile;
 				//}
-				QGraphicsPixmapItem* pixMapItem = currentTile->getItem();
+				QGraphicsItemGroup* pixMapItem = currentTile->getItem();
 				if(rowGroupIndexInAll %2 == columnGroupIndexInAll %2)
 				{
 					pixMapItem->setZValue(1);

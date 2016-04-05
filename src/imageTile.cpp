@@ -4,6 +4,19 @@ namespace mpMapInteractive
 {
 	imageTile::~imageTile()
 	{
+		for(std::vector<QGraphicsPixmapItem*>::iterator i = pixMapItems.begin(); i != pixMapItems.end(); i++)
+		{
+			delete *i;
+		}
+		pixMapItems.clear();
+	}
+	imageTile::imageTile()
+		: groupItem(NULL)
+	{}
+	imageTile::imageTile(imageTile&& other)
+		:rowIndices(std::move(other.rowIndices)), columnIndices(std::move(other.columnIndices)), rowGroup(other.rowGroup), columnGroup(other.columnGroup), pixMapItems(std::move(other.pixMapItems)), groupItem(other.groupItem)
+	{
+		groupItem.swap(other.groupItem);
 	}
 	imageTile::imageTile(std::vector<uchar>& data, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene)
 	:rowIndices(rowIndices), columnIndices(columnIndices), rowGroup(rowGroup), columnGroup(columnGroup)
@@ -25,12 +38,13 @@ namespace mpMapInteractive
 			}
 		}
 		QPixmap pixMap = QPixmap::fromImage(*image);
-		pixMapItem = QSharedPointer<QGraphicsPixmapItem>(graphicsScene->addPixmap(pixMap));
+		pixMapItems.push_back(graphicsScene->addPixmap(pixMap));
+		pixMapItems[0]->setPos(QPoint(0, 0));
+
+		groupItem.reset(new QGraphicsItemGroup);
+		graphicsScene->addItem(groupItem.data());
+		groupItem->addToGroup(pixMapItems[0]);
 		delete image;
-	}
-	imageTile::imageTile()
-		:pixMapItem(NULL)
-	{
 	}
 	bool imageTile::checkIndices(const std::vector<int>& otherRowIndices, const std::vector<int>& otherColumnIndices) const
 	{
@@ -63,9 +77,9 @@ namespace mpMapInteractive
 	{
 		return columnIndices;
 	}
-	QGraphicsPixmapItem* imageTile::getItem() const
+	QGraphicsItemGroup* imageTile::getItem() const
 	{
-		return pixMapItem.data();
+		return groupItem.data();
 	}
 	int imageTile::getRowGroup() const
 	{
