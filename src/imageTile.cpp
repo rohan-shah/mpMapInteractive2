@@ -72,17 +72,7 @@ namespace mpMapInteractive
 					currentTileImage->setColorTable(colours);
 				}
 
-				for(size_t j = subTileColumn*subTileSize; j < std::min((subTileColumn+1)*subTileSize, (int)columnIndices.size()); j++)
-				{
-					uchar* reorderedData = currentTileImage->scanLine((int)j - subTileColumn*subTileSize);
-					for(size_t i = subTileRow*subTileSize; i < std::min((subTileRow+1)*subTileSize, (int)rowIndices.size()); i++)
-					{
-						std::size_t rowIndex = rowIndices[i], columnIndex = columnIndices[j];
-						if(rowIndex > columnIndex) std::swap(rowIndex, columnIndex);
-						reorderedData[i - subTileRow*subTileSize] = data[(columnIndex*(columnIndex+1))/2 + rowIndex];
-					}
-					
-				}
+				generateSubTile(subTileColumn*subTileSize, (subTileColumn+1)*subTileSize, subTileRow*subTileSize, (subTileRow+1)*subTileSize, *currentTileImage);
 				QPixmap pixMap = QPixmap::fromImage(*currentTileImage);
 				QGraphicsPixmapItem* newItem = graphicsScene->addPixmap(pixMap);
 				pixMapItems(subTileRow, subTileColumn) = newItem;
