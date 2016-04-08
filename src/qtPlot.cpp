@@ -355,7 +355,7 @@ namespace mpMapInteractive
 				located = imageTile::find(imageTiles, rowGroup, columnGroup);
 				if(located == imageTiles.end())
 				{
-					imageTile newTile(originalDataToChar, nOriginalMarkers, rowGroup, columnGroup, expectedRowIndices, expectedColumnIndices, graphicsScene);
+					imageTile newTile(&originalDataToChar, nOriginalMarkers, rowGroup, columnGroup, expectedRowIndices, expectedColumnIndices, graphicsScene);
 					imageTiles.insert(std::move(newTile));
 				}
 				//set position
