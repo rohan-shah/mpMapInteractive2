@@ -338,7 +338,7 @@ namespace mpMapInteractive
 			{
 				int columnGroup = uniqueGroups[columnGroupCounter];
 				std::set<imageTile, imageTileComparer>::const_iterator located = imageTile::find(imageTiles, rowGroup, columnGroup);
-				int startOfRowGroup = startGroups[rowGroupCounter], startOfColumnGroup = startGroups[columnGroupCounter];;
+				int startOfRowGroup = startGroups[rowGroupCounter], startOfColumnGroup = startGroups[columnGroupCounter];
 
 				std::vector<int>& expectedRowIndices = expectedIndices[rowGroupCounter];
 				std::vector<int>& expectedColumnIndices = expectedIndices[columnGroupCounter];
@@ -347,7 +347,6 @@ namespace mpMapInteractive
 				{
 					if(!located->checkIndices(expectedRowIndices, expectedColumnIndices))
 					{
-						graphicsScene->removeItem(located->getItem());
 						imageTiles.erase(located);
 					}
 				}
@@ -407,12 +406,7 @@ namespace mpMapInteractive
 				continue;
 			}
 delete_tile:
-			graphicsScene->removeItem(currentTile->getItem());
-			std::set<imageTile>::iterator nextTile = currentTile;
-			nextTile++;
-
-			imageTiles.erase(currentTile);
-			currentTile = nextTile;
+			currentTile = imageTiles.erase(currentTile);
 			continue;
 
 		}

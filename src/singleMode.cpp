@@ -21,25 +21,42 @@ namespace mpMapInteractive
 		{
 			if(position > -1 && plotObject->attemptBeginComputation())
 			{
-				std::vector<int> permutation;
 				int nMarkers = data.getMarkerCount();
+
+				//Construct permutation by which we are altering the data
+				std::vector<int> permutation;
 				for(int i = 0; i < nMarkers; i++)
 				{
 					if(i != position) permutation.push_back(i);
 				}
+				//Get the current permutation, so we can get out the index of the marker shown at position
+				const std::vector<int>& currentPermutation = data.getCurrentPermutation();
+				int markerAtPosition = currentPermutation[position];
 				//remove one element from groups vector
 				const std::vector<int>& previousGroups = data.getCurrentGroups();
 				std::vector<int> newGroups(nMarkers-1);
 				std::copy(previousGroups.begin(), previousGroups.begin() + position, newGroups.begin());
 				std::copy(previousGroups.begin() + position +1, previousGroups.end(), newGroups.begin() + position);
+				//Apply the permutation
 				data.applyPermutation(permutation, newGroups);
+				//Get out the image tiles
+				//Go through them and tell each one to remove the marker. We do this because we can do this more efficiently than just letting dataChanged() recreate everything from scratch. The changes we make to the image tiles here mean that dataChanged() will decide that nothing actually needs to be done. Although it will still delete imageTiles which become empty. 
+				for(std::set<imageTile, imageTileComparer>::iterator i = plotObject->imageTiles.begin(); i != plotObject->imageTiles.end(); i++)
+				{
+					i->deleteMarker(markerAtPosition);
+				}
+
+				//Signal to update the image onscreen. This re-creates from scratch the bits of the image that no longer match the underlying data
 				plotObject->dataChanged();
+				//update the highlighting
 				nMarkers = data.getMarkerCount();
 				if(position >= nMarkers) position -= 1;
 				deleteHighlight();
 				addHighlight();
+				//Now that we've updated the highlighting, tell the graphicsScene to update again
 				QGraphicsScene& graphicsScene = plotObject->getGraphicsScene();
 				graphicsScene.update();
+				//End the computation
 				plotObject->endComputation();
 			}
 		}

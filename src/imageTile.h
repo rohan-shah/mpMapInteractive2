@@ -5,6 +5,7 @@
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
 #include <vector>
+#include <memory>
 namespace mpMapInteractive
 {
 	template<typename T> class rowMajorMatrix
@@ -68,21 +69,23 @@ namespace mpMapInteractive
 		static std::set<imageTile, imageTileComparer>::const_iterator find(const std::set<imageTile, imageTileComparer>& collection, int rowGroup, int columnGroup);
 		QGraphicsItemGroup* getItem() const;
 		bool checkIndices(const std::vector<int>& otherRowIndices, const std::vector<int>& otherColumnIndices) const;
-		void deleteMarker(int marker);
+		//This doesn't change the sort order (which is based on rowGroup and columnGroup), so allow it to be called on const objects
+		void deleteMarker(int marker) const;
 	private:
 		static const int subTileSize = 500;
 		void regenerate();
-		void generateSubTile(int columnStart, int columnEnd, int rowStart, int rowEnd, QImage& image);
+		void generateSubTile(int columnStart, int columnEnd, int rowStart, int rowEnd, QImage& image) const;
+		void generateSubTile(const std::vector<int>& columnIndices, const std::vector<int>& rowIndices, QImage& image) const;
 		imageTile(const imageTile& other);
 		imageTile& operator=(const imageTile& other);
 		imageTile();
 		std::vector<uchar>* data;
-		std::vector<int> rowIndices, columnIndices;
+		mutable std::vector<int> rowIndices, columnIndices;
 		int rowGroup, columnGroup;
 		//Vectors that tell us what sub tile row / column a certain row-column is contained in
-		std::vector<std::vector<int> > rowPartition, columnPartition;
-		rowMajorMatrix<QGraphicsPixmapItem*> pixMapItems;
-		QSharedPointer<QGraphicsItemGroup> groupItem;
+		mutable std::vector<std::vector<int> > rowPartition, columnPartition;
+		mutable rowMajorMatrix<QGraphicsPixmapItem*> pixMapItems;
+		std::unique_ptr<QGraphicsItemGroup> groupItem;
 		QGraphicsScene* graphicsScene;
 	};
 }

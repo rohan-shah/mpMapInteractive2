@@ -38,6 +38,7 @@ namespace mpMapInteractive
 		void dataChanged();
 		QProgressBar* addProgressBar();
 		void deleteProgressBar(QProgressBar*);
+		std::set<imageTile, imageTileComparer> imageTiles;
 	protected:
 		void closeEvent(QCloseEvent* event);
 		void keyPressEvent(QKeyEvent* event);
@@ -74,7 +75,6 @@ namespace mpMapInteractive
 		ZoomGraphicsView* graphicsView;
 		QLabel* statusLabel;
 		QGraphicsScene* graphicsScene;
-		std::set<imageTile, imageTileComparer> imageTiles;
 		std::vector<uchar> originalDataToChar;
 		QStatusBar* statusBar;
 
