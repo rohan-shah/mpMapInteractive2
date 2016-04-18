@@ -27,6 +27,11 @@ namespace mpMapInteractive
 {
 	qtPlot::~qtPlot()
 	{
+		groupsModeObject.reset();
+		singleModeObject.reset();
+		intervalModeObject.clear();
+		currentModeObject.clear();
+
 		imageTiles.clear();
 		delete[] imputedRawImageData;
 		delete transparency;

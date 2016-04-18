@@ -123,7 +123,7 @@ namespace mpMapInteractive
 		undoLabel->setPalette(p);
 		formLayout->addRow(undoLabel, new QLabel(""));
 
-		QLabel* deleteLabel = new QLabel(QString("Delete (Del)"));
+		deleteLabel = new QLabel(QString("Delete (Del)"));
 		deleteLabel->setPalette(p);
 		formLayout->addRow(deleteLabel, new QLabel(""));
 

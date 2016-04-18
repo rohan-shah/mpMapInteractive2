@@ -1,6 +1,7 @@
 #include "plotModeObject.h"
 class QFrame;
 class QGraphicsRectItem;
+class QLabel;
 namespace mpMapInteractive
 {
 	struct singleMode : public plotModeObject
@@ -24,5 +25,6 @@ namespace mpMapInteractive
 		void addHighlight();
 		int position;
 		QGraphicsRectItem* highlight;
+		QLabel* deleteLabel;
 	};
 }
