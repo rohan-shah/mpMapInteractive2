@@ -137,40 +137,45 @@ namespace mpMapInteractive
 		constructColourTable(nColours, colours);
 		//rebuild anything that's left. 
 		int cumulativeX = 0;
-		for(std::vector<int>::iterator i = toRegenerate.begin(); i != toRegenerate.end(); i++)
+		std::vector<int>::iterator currentToRegenerate = toRegenerate.begin();
+		for(int i = 0; i < newTilesCount; i++)
 		{
-			int cumulativeY = 0;
-			for(int j = 0; j <= *i; j++)
+			if(currentToRegenerate != toRegenerate.end() && i == *currentToRegenerate) 
 			{
-				//Set up image for partition entries *i and j. 
-				QImage* currentTileImage = new QImage(newPartition[*i].size(), newPartition[j].size(), QImage::Format_Indexed8);
-				currentTileImage->setColorTable(colours);
-				generateSubTile(newPartition[j], newPartition[*i], *currentTileImage);
-
-				QPixmap pixMap = QPixmap::fromImage(*currentTileImage);
-				QGraphicsPixmapItem* newItem = graphicsScene->addPixmap(pixMap);
-				newPixMapItems(*i, j) = newItem;
-				newItem->setPos(QPoint(cumulativeX, cumulativeY));
-				groupItem->addToGroup(newItem);
-				delete currentTileImage;
-
-				//If it's not a diagonal entry, then we also need to set up the tile on the other side of the diagonal
-				if(*i != j)
+				currentToRegenerate++;
+				int cumulativeY = 0;
+				for(int j = 0; j <= i; j++)
 				{
-					QImage* currentTileImage = new QImage(newPartition[j].size(), newPartition[*i].size(), QImage::Format_Indexed8);
+					//Set up image for partition entries *i and j. 
+					QImage* currentTileImage = new QImage(newPartition[i].size(), newPartition[j].size(), QImage::Format_Indexed8);
 					currentTileImage->setColorTable(colours);
-					generateSubTile(newPartition[*i], newPartition[j], *currentTileImage);
+					generateSubTile(newPartition[j], newPartition[i], *currentTileImage);
 
 					QPixmap pixMap = QPixmap::fromImage(*currentTileImage);
 					QGraphicsPixmapItem* newItem = graphicsScene->addPixmap(pixMap);
-					newPixMapItems(j, *i) = newItem;
-					newItem->setPos(QPoint(cumulativeY, cumulativeX));
+					newPixMapItems(i, j) = newItem;
+					newItem->setPos(QPoint(cumulativeX, cumulativeY));
 					groupItem->addToGroup(newItem);
 					delete currentTileImage;
+
+					//If it's not a diagonal entry, then we also need to set up the tile on the other side of the diagonal
+					if(i != j)
+					{
+						QImage* currentTileImage = new QImage(newPartition[j].size(), newPartition[i].size(), QImage::Format_Indexed8);
+						currentTileImage->setColorTable(colours);
+						generateSubTile(newPartition[i], newPartition[j], *currentTileImage);
+
+						QPixmap pixMap = QPixmap::fromImage(*currentTileImage);
+						QGraphicsPixmapItem* newItem = graphicsScene->addPixmap(pixMap);
+						newPixMapItems(j, i) = newItem;
+						newItem->setPos(QPoint(cumulativeY, cumulativeX));
+						groupItem->addToGroup(newItem);
+						delete currentTileImage;
+					}
+					cumulativeY += newPartition[j].size();
 				}
-				cumulativeY += newPartition[j].size();
 			}
-			cumulativeX += newPartition[*i].size();
+			cumulativeX += newPartition[i].size();
 		}
 		//Delete all the subtiles that weren't reused
 		for(std::vector<QGraphicsPixmapItem*>::iterator i = pixMapItems.getData().begin(); i != pixMapItems.getData().end(); i++)
@@ -632,11 +637,11 @@ namespace mpMapInteractive
 			}
 			for(int i = startIndex - cutSize; i < startIndex; i++)
 			{
-				rowIndices[i] = columnIndices[i - (startIndex - cutSize + cutStartIndex)];
+				rowIndices[i] = columnIndices[i - (startIndex - cutSize) + cutStartIndex];
 			}
 			for(int i = startSubtile - cutSizeSubtile; i < startSubtile; i++)
 			{
-				rowPartition[i] = columnPartition[i - (startSubtile - cutSizeSubtile + cutStartSubtile)];
+				rowPartition[i] = columnPartition[i - (startSubtile - cutSizeSubtile) + cutStartSubtile];
 			}
 			//Now the image subtiles. This is a horrible mess.
 			int cumulativeX = 0;
