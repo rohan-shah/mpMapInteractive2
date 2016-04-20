@@ -82,12 +82,14 @@ namespace mpMapInteractive
 		//Set up the new partition. 
 		std::vector<std::vector<int> > newPartition(newTilesCount);
 		std::vector<std::vector<int> >::iterator newPartitionEntry = newPartition.begin();
-		//The next boundary that we're looking for
+		//The next new boundary that we're looking for
 		std::vector<int>::iterator boundary = notAlreadyBoundaries.begin();
 		//The next boundary could also be an existing partition boundary
 		std::vector<std::vector<int> >::iterator previousPartitionIterator = rowPartition.begin();
 		//The subtiles that need to be regenerated
-		std::vector<int> toRegenerate;
+		std::vector<int> correspondingOldTiles;
+		int oldTilesCounter = 0;
+		bool hasOldTile = true;
 		for(int counter = 0; counter < rowIndices.size(); counter++)
 		{
 			if(boundary != notAlreadyBoundaries.end() && counter == *boundary)
@@ -95,87 +97,61 @@ namespace mpMapInteractive
 				newPartitionEntry++;
 				boundary++;
 				int newPartitionIndex = (int)std::distance(newPartition.begin(), newPartitionEntry);
-				toRegenerate.push_back(newPartitionIndex-1);
-				toRegenerate.push_back(newPartitionIndex);
+				correspondingOldTiles.push_back(-1);
 				newPartitionEntry->push_back(rowIndices[counter]);
+				hasOldTile = false;
 			}
 			else if(rowIndices[counter] == previousPartitionIterator->back())
 			{
+				if(hasOldTile)
+				{
+					correspondingOldTiles.push_back(oldTilesCounter);
+					oldTilesCounter++;
+				}
+				else
+				{
+					correspondingOldTiles.push_back(-1);
+					hasOldTile = true;
+					oldTilesCounter++;
+				}
 				newPartitionEntry->push_back(rowIndices[counter]);
 				newPartitionEntry++;
 				previousPartitionIterator++;
 			}
 			else newPartitionEntry->push_back(rowIndices[counter]);
 		}
-		//Remove duplicates (yes, there might be some). 
-		std::sort(toRegenerate.begin(), toRegenerate.end());
-		toRegenerate.erase(std::unique(toRegenerate.begin(), toRegenerate.end()), toRegenerate.end());
-		//Copy across all the subtiles that can be reused
-		std::vector<int>::iterator nextSkipX = toRegenerate.begin();
-		for(int newTileX = 0; newTileX < newTilesCount; newTileX++)
-		{
-			if(newTileX == *nextSkipX)
-			{
-				nextSkipX++;
-				continue;
-			}
-			std::vector<int>::iterator nextSkipY = toRegenerate.begin();
-			for(int newTileY = 0; newTileY < newTilesCount; newTileY++)
-			{
-				if(newTileY == *nextSkipY)
-				{
-					nextSkipY++;
-					continue;
-				}
-				QGraphicsPixmapItem*& copiedItem = pixMapItems(newTileX - std::distance(toRegenerate.begin(), nextSkipX), newTileY - std::distance(toRegenerate.begin(), nextSkipY));
-				newPixMapItems(newTileX, newTileY) = copiedItem;
-				copiedItem = NULL;
-			}
-		}
-
 		QVector<QRgb> colours;
 		constructColourTable(nColours, colours);
-		//rebuild anything that's left. 
+		//Copy across all the subtiles that can be reused, and rebuild the tiles that can't
 		int cumulativeX = 0;
-		std::vector<int>::iterator currentToRegenerate = toRegenerate.begin();
-		for(int i = 0; i < newTilesCount; i++)
+		for(int newTileX = 0; newTileX < newTilesCount; newTileX++)
 		{
-			if(currentToRegenerate != toRegenerate.end() && i == *currentToRegenerate) 
+			int cumulativeY = 0;
+			for(int newTileY = 0; newTileY < newTilesCount; newTileY++)
 			{
-				currentToRegenerate++;
-				int cumulativeY = 0;
-				for(int j = 0; j <= i; j++)
+				if(correspondingOldTiles[newTileY] == -1 || correspondingOldTiles[newTileX] == -1)
 				{
-					//Set up image for partition entries *i and j. 
-					QImage* currentTileImage = new QImage(newPartition[i].size(), newPartition[j].size(), QImage::Format_Indexed8);
+					QImage* currentTileImage = new QImage(newPartition[newTileX].size(), newPartition[newTileY].size(), QImage::Format_Indexed8);
 					currentTileImage->setColorTable(colours);
-					generateSubTile(newPartition[j], newPartition[i], *currentTileImage);
+					generateSubTile(newPartition[newTileY], newPartition[newTileX], *currentTileImage);
 
 					QPixmap pixMap = QPixmap::fromImage(*currentTileImage);
 					QGraphicsPixmapItem* newItem = graphicsScene->addPixmap(pixMap);
-					newPixMapItems(i, j) = newItem;
+					newPixMapItems(newTileX, newTileY) = newItem;
 					newItem->setPos(QPoint(cumulativeX, cumulativeY));
 					groupItem->addToGroup(newItem);
 					delete currentTileImage;
-
-					//If it's not a diagonal entry, then we also need to set up the tile on the other side of the diagonal
-					if(i != j)
-					{
-						QImage* currentTileImage = new QImage(newPartition[j].size(), newPartition[i].size(), QImage::Format_Indexed8);
-						currentTileImage->setColorTable(colours);
-						generateSubTile(newPartition[i], newPartition[j], *currentTileImage);
-
-						QPixmap pixMap = QPixmap::fromImage(*currentTileImage);
-						QGraphicsPixmapItem* newItem = graphicsScene->addPixmap(pixMap);
-						newPixMapItems(j, i) = newItem;
-						newItem->setPos(QPoint(cumulativeY, cumulativeX));
-						groupItem->addToGroup(newItem);
-						delete currentTileImage;
-					}
-					cumulativeY += newPartition[j].size();
 				}
+				else
+				{
+					QGraphicsPixmapItem*& copiedItem = pixMapItems(correspondingOldTiles[newTileX], correspondingOldTiles[newTileY]);
+					copiedItem->setPos(QPoint(cumulativeX, cumulativeY));
+					newPixMapItems(newTileX, newTileY) = copiedItem;
+					copiedItem = NULL;
+				}
+				cumulativeY += newPartition[newTileY].size();
 			}
-			cumulativeX += newPartition[i].size();
+			cumulativeX += newPartition[newTileX].size();
 		}
 		//Delete all the subtiles that weren't reused
 		for(std::vector<QGraphicsPixmapItem*>::iterator i = pixMapItems.getData().begin(); i != pixMapItems.getData().end(); i++)
