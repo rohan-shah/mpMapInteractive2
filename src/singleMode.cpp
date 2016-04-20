@@ -17,7 +17,14 @@ namespace mpMapInteractive
 	}
 	void singleMode::keyPressEvent(QKeyEvent* event)
 	{
-		if(event->key() == Qt::Key_Delete)
+		if(event->key() == Qt::Key_U && (event->modifiers() & Qt::ControlModifier))
+		{
+			data.undo();
+			plotObject->dataChanged();
+			deleteHighlight();
+			position = -1;
+		}
+		else if(event->key() == Qt::Key_Delete)
 		{
 			if(position > -1 && plotObject->attemptBeginComputation())
 			{

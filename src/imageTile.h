@@ -69,13 +69,16 @@ namespace mpMapInteractive
 		static std::set<imageTile, imageTileComparer>::const_iterator find(const std::set<imageTile, imageTileComparer>& collection, int rowGroup, int columnGroup);
 		QGraphicsItemGroup* getItem() const;
 		bool checkIndices(const std::vector<int>& otherRowIndices, const std::vector<int>& otherColumnIndices) const;
-		//This doesn't change the sort order (which is based on rowGroup and columnGroup), so allow it to be called on const objects
+		//These don't change the sort order (which is based on rowGroup and columnGroup), so allow them to be called on const objects
 		void deleteMarker(int marker) const;
+		void shiftMarkers(int cutStartIndex, int cutEndIndex, int startIndex) const;
 	private:
 		static const int subTileSize = 500;
 		void regenerate();
 		void generateSubTile(int columnStart, int columnEnd, int rowStart, int rowEnd, QImage& image) const;
 		void generateSubTile(const std::vector<int>& columnIndices, const std::vector<int>& rowIndices, QImage& image) const;
+		//The input to this function is a set of indices into rowIndices / columnIndices (They're required to be identical for this function)
+		void makeSubtileBoundariesBefore(std::vector<int>& markerOffsets) const;
 		imageTile(const imageTile& other);
 		imageTile& operator=(const imageTile& other);
 		imageTile();

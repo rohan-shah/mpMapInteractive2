@@ -7,7 +7,7 @@ namespace mpMapInteractive
 	{
 	public:
 		intervalMode(qtPlot* plotObject, qtPlotData& data, unsigned char** imputedRawData, unsigned char* rawImageData, plotModeObject::imputeFunctionType imputeFunction, std::vector<double>& levels)
-			: plotModeObject(plotObject, data, imputedRawData, rawImageData, imputeFunction, levels), highlight(NULL), start(-1), end(-1)
+			: plotModeObject(plotObject, data, imputedRawData, rawImageData, imputeFunction, levels), highlight(NULL), start(-1), end(-1), cutStart(-1), cutEnd(-1)
 		{
 			constructFrame();
 		}
@@ -19,10 +19,12 @@ namespace mpMapInteractive
 		virtual void leaveFocus();
 		QFrame* frame;
 	private:
+		void clearCut();
 		void constructFrame();
 		void deleteHighlighting();
 		void addHighlighting();
 		QGraphicsRectItem* highlight;
 		int start, end;
+		int cutStart, cutEnd;
 	};
 }

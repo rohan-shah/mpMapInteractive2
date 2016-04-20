@@ -70,10 +70,24 @@ namespace mpMapInteractive
 		frame->hide();
 		deleteHighlighting();
 	}
+	void intervalMode::clearCut()
+	{
+		cutStart = cutEnd = -1;
+	}
 	void intervalMode::keyPressEvent(QKeyEvent* event)
 	{
-		if(event->key() == Qt::Key_O && (event->modifiers() & Qt::ControlModifier))
+		if(event->key() == Qt::Key_U && (event->modifiers() & Qt::ControlModifier))
 		{
+			data.undo();
+			plotObject->dataChanged();
+			deleteHighlighting();
+			start = -1;
+			end = -1;
+			clearCut();
+		}
+		else if(event->key() == Qt::Key_O && (event->modifiers() & Qt::ControlModifier))
+		{
+			clearCut();
 			//See documentation for attemptBeginComputation
 			if(start > -1 && end > -1 && plotObject->attemptBeginComputation())
 			{
@@ -117,6 +131,7 @@ namespace mpMapInteractive
 		}
 		else if(event->key() == Qt::Key_R && (event->modifiers() & Qt::ControlModifier))
 		{
+			clearCut();
 			if(start > -1 && end > -1 && plotObject->attemptBeginComputation()) 
 			{
 				{
@@ -134,6 +149,72 @@ namespace mpMapInteractive
 				plotObject->endComputation();
 			}
 		}
+		else if(event->key() == Qt::Key_X && (event->modifiers() & Qt::ControlModifier))
+		{
+			if(start > -1 && end > -1)
+			{
+				cutStart = std::min(start, end);
+				cutEnd = std::max(start, end);
+				start = end = -1;
+				deleteHighlighting();
+			}
+		}
+		else if(event->key() == Qt::Key_V && (event->modifiers() & Qt::ControlModifier))
+		{
+			if(cutEnd > -1 && cutStart > -1)
+			{
+				//If we're putting the cut region back in the same spot, then do nothing. 
+				if(start >= cutStart && start <= cutEnd+1)
+				{
+					clearCut();
+				}
+				else
+				{
+					if(plotObject->imageTiles.size() > 1)
+					{
+						throw std::runtime_error("Cannot perform a cut and paste if there is more than one group shown");
+					}
+					plotObject->imageTiles.begin()->shiftMarkers(cutStart, cutEnd, start);
+					//Create permutation
+					int nMarkers = data.getMarkerCount();
+					std::vector<int> permutation(nMarkers);
+					int cutSize = cutEnd - cutStart + 1;
+					if(start < cutStart)
+					{
+						//Start until the destination
+						for(int i = 0; i < start; i++) permutation[i] = i;
+						//Put in the cut markers
+						for(int i = start; i < start + cutSize; i++) permutation[i] = cutStart + (i - start);
+						//Markers between the destination and source
+						for(int i = start + cutSize; i < cutEnd+1; i++) permutation[i] = i - cutSize;
+						//Markers after the source are unchanged
+						for(int i = cutEnd + 1; i < nMarkers; i++) permutation[i] = i;
+					}
+					else if(start > cutEnd+1)
+					{
+						//Start until the source
+						for(int i = 0; i < cutStart; i++) permutation[i] = i;
+						//Take out the cut markers
+						for(int i = cutStart; i < start - cutSize; i++) permutation[i] = i + cutSize;
+						//Put in the cut markers
+						for(int i = start - cutSize;  i < start; i++) permutation[i] = i - (start - cutSize) + cutStart;
+						//Markers after the target are unchanged
+						for(int i = start; i < nMarkers; i++) permutation[i] = i;
+					}
+					else
+					{
+						throw std::runtime_error("Internal error");
+					}
+					data.applyPermutation(permutation, data.getCurrentGroups());
+
+					start = -1;
+					end = -1;
+					deleteHighlighting();
+					plotObject->dataChanged();
+					clearCut();
+				}
+			}
+		}
 	}
 	void intervalMode::mousePressed(int x, int y, Qt::MouseButtons pressed)
 	{
@@ -146,6 +227,7 @@ namespace mpMapInteractive
 		{
 			if(QApplication::keyboardModifiers() & Qt::ShiftModifier && start > -1)
 			{
+				clearCut();
 				end = x;
 				addHighlighting();
 			}

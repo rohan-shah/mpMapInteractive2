@@ -39,6 +39,150 @@ namespace mpMapInteractive
 			}
 		}
 	}
+	void imageTile::makeSubtileBoundariesBefore(std::vector<int>& markerOffsets) const
+	{
+		//There is only one argument, so we require that this tile be symmetric / on a diagonal
+		if(rowGroup != columnGroup || pixMapItems.getNRows() != pixMapItems.getNColumns())
+		{
+			throw std::runtime_error("Cannot call makeSubtileBoundariesBefore except on a symmetric imageTile object");
+		}
+
+		//Remove duplicates
+		std::sort(markerOffsets.begin(), markerOffsets.end());
+		markerOffsets.erase(std::unique(markerOffsets.begin(), markerOffsets.end()), markerOffsets.end());
+
+		//Now get out the subset which are not *already* boundaries
+		std::vector<int> notAlreadyBoundaries;
+
+		for(std::vector<int>::iterator markerIterator = markerOffsets.begin(); markerIterator != markerOffsets.end(); markerIterator++)
+		{
+			//Start going through the rowPartition object, looking for the entry which contains the (*markerIterator)'th entry 
+			std::vector<std::vector<int> >::iterator partitionSearch = rowPartition.begin();
+			int counter = 0;
+			for(; partitionSearch != rowPartition.end(); partitionSearch++)
+			{
+				counter += partitionSearch->size();
+				if(counter > *markerIterator) break;
+			}
+			std::vector<int>::iterator withinPartitionEntrySearch = std::find(partitionSearch->begin(), partitionSearch->end(), rowIndices[*markerIterator]);
+			//We should find the target marker within this entry of the partition
+			if(withinPartitionEntrySearch == partitionSearch->end()) throw std::runtime_error("Internal error");
+			//We only need to do something if the target marker is not the first in the partition entry
+			if(withinPartitionEntrySearch != partitionSearch->begin())
+			{
+				notAlreadyBoundaries.push_back(*markerIterator);
+			}
+		}
+		if(notAlreadyBoundaries.size() == 0) return;
+
+		std::sort(notAlreadyBoundaries.begin(), notAlreadyBoundaries.end());
+		int newTilesCount = pixMapItems.getNRows() + notAlreadyBoundaries.size();
+		//New matrix of graphics objects
+		rowMajorMatrix<QGraphicsPixmapItem*> newPixMapItems(newTilesCount, newTilesCount, NULL);
+		//Set up the new partition. 
+		std::vector<std::vector<int> > newPartition(newTilesCount);
+		std::vector<std::vector<int> >::iterator newPartitionEntry = newPartition.begin();
+		//The next boundary that we're looking for
+		std::vector<int>::iterator boundary = notAlreadyBoundaries.begin();
+		//The next boundary could also be an existing partition boundary
+		std::vector<std::vector<int> >::iterator previousPartitionIterator = rowPartition.begin();
+		//The subtiles that need to be regenerated
+		std::vector<int> toRegenerate;
+		for(int counter = 0; counter < rowIndices.size(); counter++)
+		{
+			if(boundary != notAlreadyBoundaries.end() && counter == *boundary)
+			{
+				newPartitionEntry++;
+				boundary++;
+				int newPartitionIndex = (int)std::distance(newPartition.begin(), newPartitionEntry);
+				toRegenerate.push_back(newPartitionIndex-1);
+				toRegenerate.push_back(newPartitionIndex);
+				newPartitionEntry->push_back(rowIndices[counter]);
+			}
+			else if(rowIndices[counter] == previousPartitionIterator->back())
+			{
+				newPartitionEntry->push_back(rowIndices[counter]);
+				newPartitionEntry++;
+				previousPartitionIterator++;
+			}
+			else newPartitionEntry->push_back(rowIndices[counter]);
+		}
+		//Remove duplicates (yes, there might be some). 
+		std::sort(toRegenerate.begin(), toRegenerate.end());
+		toRegenerate.erase(std::unique(toRegenerate.begin(), toRegenerate.end()), toRegenerate.end());
+		//Copy across all the subtiles that can be reused
+		std::vector<int>::iterator nextSkipX = toRegenerate.begin();
+		for(int newTileX = 0; newTileX < newTilesCount; newTileX++)
+		{
+			if(newTileX == *nextSkipX)
+			{
+				nextSkipX++;
+				continue;
+			}
+			std::vector<int>::iterator nextSkipY = toRegenerate.begin();
+			for(int newTileY = 0; newTileY < newTilesCount; newTileY++)
+			{
+				if(newTileY == *nextSkipY)
+				{
+					nextSkipY++;
+					continue;
+				}
+				QGraphicsPixmapItem*& copiedItem = pixMapItems(newTileX - std::distance(toRegenerate.begin(), nextSkipX), newTileY - std::distance(toRegenerate.begin(), nextSkipY));
+				newPixMapItems(newTileX, newTileY) = copiedItem;
+				copiedItem = NULL;
+			}
+		}
+
+		QVector<QRgb> colours;
+		constructColourTable(nColours, colours);
+		//rebuild anything that's left. 
+		int cumulativeX = 0;
+		for(std::vector<int>::iterator i = toRegenerate.begin(); i != toRegenerate.end(); i++)
+		{
+			int cumulativeY = 0;
+			for(int j = 0; j <= *i; j++)
+			{
+				//Set up image for partition entries *i and j. 
+				QImage* currentTileImage = new QImage(newPartition[*i].size(), newPartition[j].size(), QImage::Format_Indexed8);
+				currentTileImage->setColorTable(colours);
+				generateSubTile(newPartition[j], newPartition[*i], *currentTileImage);
+
+				QPixmap pixMap = QPixmap::fromImage(*currentTileImage);
+				QGraphicsPixmapItem* newItem = graphicsScene->addPixmap(pixMap);
+				newPixMapItems(*i, j) = newItem;
+				newItem->setPos(QPoint(cumulativeX, cumulativeY));
+				groupItem->addToGroup(newItem);
+				delete currentTileImage;
+
+				//If it's not a diagonal entry, then we also need to set up the tile on the other side of the diagonal
+				if(*i != j)
+				{
+					QImage* currentTileImage = new QImage(newPartition[j].size(), newPartition[*i].size(), QImage::Format_Indexed8);
+					currentTileImage->setColorTable(colours);
+					generateSubTile(newPartition[*i], newPartition[j], *currentTileImage);
+
+					QPixmap pixMap = QPixmap::fromImage(*currentTileImage);
+					QGraphicsPixmapItem* newItem = graphicsScene->addPixmap(pixMap);
+					newPixMapItems(j, *i) = newItem;
+					newItem->setPos(QPoint(cumulativeY, cumulativeX));
+					groupItem->addToGroup(newItem);
+					delete currentTileImage;
+				}
+				cumulativeY += newPartition[j].size();
+			}
+			cumulativeX += newPartition[*i].size();
+		}
+		//Delete all the subtiles that weren't reused
+		for(std::vector<QGraphicsPixmapItem*>::iterator i = pixMapItems.getData().begin(); i != pixMapItems.getData().end(); i++)
+		{
+			delete *i;
+		}
+		
+		//Swap in the new data structures
+		pixMapItems.swap(newPixMapItems);
+		rowPartition = newPartition;
+		columnPartition.swap(newPartition);
+	}
 	void imageTile::generateSubTile(const std::vector<int>& columnIndices, const std::vector<int>& rowIndices, QImage& image) const
 	{
 		std::vector<uchar>& data = *(this->data);
@@ -317,5 +461,294 @@ namespace mpMapInteractive
 				}
 			}
 		}
+	}
+	void imageTile::shiftMarkers(int cutStartIndex, int cutEndIndex, int startIndex) const
+	{
+		//This tile has to be symmetric, otherwise throw an error
+		if(rowGroup != columnGroup)
+		{
+			throw std::runtime_error("Cannot call shiftMarkers except on a symmetric imageTile object");
+		}
+		if(startIndex >= cutStartIndex && startIndex <= cutEndIndex+1)
+		{
+			throw std::runtime_error("Trying to cut and paste to the same location");
+		}
+		std::vector<int> additionalBoundaries;
+		if(cutStartIndex != 0) additionalBoundaries.push_back(cutStartIndex);
+		if(cutEndIndex != rowIndices.size()-1) additionalBoundaries.push_back(cutEndIndex+1);
+		if(startIndex != 0) additionalBoundaries.push_back(startIndex);
+
+		makeSubtileBoundariesBefore(additionalBoundaries);
+		int cutStartSubtile, cutEndSubtile, startSubtile;
+		for(std::vector<std::vector<int> >::iterator i = rowPartition.begin(); i != rowPartition.end(); i++)
+		{
+			int j = (int)std::distance(rowPartition.begin(), i);
+			if(i->front() == rowIndices[cutStartIndex]) cutStartSubtile = j;
+			if(i->front() == rowIndices[startIndex]) startSubtile = j;
+			if(i->back() == rowIndices[cutEndIndex]) cutEndSubtile = j;
+		}
+		//Now it's going to be easy to do the cut and replace. 
+		int newSubtilesCount = pixMapItems.getNRows();
+		//New matrix of subtiles
+		rowMajorMatrix<QGraphicsPixmapItem*> newPixMapItems(newSubtilesCount, newSubtilesCount);
+		int cutSize = cutEndIndex - cutStartIndex + 1;
+		int cutSizeSubtile = cutEndSubtile - cutStartSubtile + 1;
+		if(startIndex < cutStartIndex)
+		{
+			//Indices and partition first
+			for(int i = startIndex; i < startIndex + cutSize; i++)
+			{
+				rowIndices[i] = columnIndices[i - startIndex + cutStartIndex];
+			}
+			for(int i = startSubtile; i < startSubtile + cutSizeSubtile; i++)
+			{
+				rowPartition[i] = columnPartition[i - startSubtile + cutStartSubtile];
+			}
+			for(int i = startIndex + cutSize; i < cutEndIndex+1; i++)
+			{
+				rowIndices[i] = columnIndices[i - cutSize];
+			}
+			for(int i = startSubtile + cutSizeSubtile; i < cutEndSubtile + 1; i++)
+			{
+				rowPartition[i] = columnPartition[i - cutSizeSubtile];
+			}
+			//Now the image subtiles. This is a horrible mess. 
+			int cumulativeX = 0;
+			for(int i = 0; i < startSubtile; i++)
+			{
+				int cumulativeY = 0;
+				for(int j = 0; j < startSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile; j < startSubtile + cutSizeSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j - startSubtile + cutStartSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile + cutSizeSubtile; j <= cutEndSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j - cutSizeSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = cutEndSubtile + 1; j < newSubtilesCount; j++) newPixMapItems(i, j) = pixMapItems(i, j);
+				cumulativeX += rowPartition[i].size();
+			}
+			for(int i = startSubtile; i < startSubtile + cutSizeSubtile; i++)
+			{
+				int cumulativeY = 0;
+				for(int j = 0; j < startSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(cutStartSubtile + (i - startSubtile), j);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile; j < startSubtile + cutSizeSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(cutStartSubtile + (i - startSubtile), cutStartSubtile + (j - startSubtile));
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile + cutSizeSubtile; j <= cutEndSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(cutStartSubtile + (i - startSubtile), j - cutSizeSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = cutEndSubtile + 1; j < newSubtilesCount; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(cutStartSubtile + (i - startSubtile), j);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				cumulativeX += rowPartition[i].size();
+			}
+			for(int i = startSubtile + cutSizeSubtile; i <= cutEndSubtile; i++)
+			{
+				int cumulativeY = 0;
+				for(int j = 0; j < startSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i - cutSizeSubtile, j);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile; j < startSubtile + cutSizeSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i - cutSizeSubtile, j - startSubtile + cutStartSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile + cutSizeSubtile; j <= cutEndSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i - cutSizeSubtile, j - cutSizeSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = cutEndSubtile + 1; j < newSubtilesCount; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i - cutSizeSubtile, j);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				cumulativeX += rowPartition[i].size();
+			}
+			for(int i = cutEndSubtile + 1; i < newSubtilesCount; i++)
+			{
+				int cumulativeY = 0;
+				for(int j = 0; j < startSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile; j < startSubtile + cutSizeSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j - startSubtile + cutStartSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile + cutSizeSubtile; j <= cutEndSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j - cutSizeSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = cutEndSubtile + 1; j < newSubtilesCount; j++) newPixMapItems(i, j) = pixMapItems(i, j);
+				cumulativeX += rowPartition[i].size();
+			}
+		}
+		else
+		{
+			//Indices and partition first
+			for(int i = cutStartIndex; i < startIndex - cutSize; i++)
+			{
+				rowIndices[i] = columnIndices[i + cutSize];
+			}
+			for(int i = cutStartSubtile; i < startSubtile - cutSizeSubtile; i++)
+			{
+				rowPartition[i] = columnPartition[i + cutSizeSubtile];
+			}
+			for(int i = startIndex - cutSize; i < startIndex; i++)
+			{
+				rowIndices[i] = columnIndices[i - (startIndex - cutSize + cutStartIndex)];
+			}
+			for(int i = startSubtile - cutSizeSubtile; i < startSubtile; i++)
+			{
+				rowPartition[i] = columnPartition[i - (startSubtile - cutSizeSubtile + cutStartSubtile)];
+			}
+			//Now the image subtiles. This is a horrible mess.
+			int cumulativeX = 0;
+			for(int i = 0; i < cutStartSubtile; i++)
+			{
+				int cumulativeY = 0;
+				for(int j = 0; j < cutStartSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = cutStartSubtile; j < startSubtile - cutSizeSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j + cutSizeSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile - cutSizeSubtile; j < startSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j - startSubtile + cutSizeSubtile + cutStartSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile; j < newSubtilesCount; j++) newPixMapItems(i, j) = pixMapItems(i, j);
+				cumulativeX += rowPartition[i].size();
+			}
+			for(int i = cutStartSubtile; i < startSubtile - cutSizeSubtile; i++)
+			{
+				int cumulativeY = 0;
+				for(int j = 0; j < cutStartSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i + cutSizeSubtile, j);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = cutStartSubtile; j < startSubtile - cutSizeSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i + cutSizeSubtile, j + cutSizeSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile - cutSizeSubtile; j < startSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i + cutSizeSubtile, j - startSubtile + cutSizeSubtile + cutStartSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile; j < newSubtilesCount; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i + cutSizeSubtile, j);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				cumulativeX += rowPartition[i].size();
+			}
+			for(int i = startSubtile - cutSizeSubtile; i < startSubtile; i++)
+			{
+				int cumulativeY = 0;
+				for(int j = 0; j < cutStartSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i - startSubtile + cutSizeSubtile + cutStartSubtile, j);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = cutStartSubtile; j < startSubtile - cutSizeSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i - startSubtile + cutSizeSubtile + cutStartSubtile, j + cutSizeSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile - cutSizeSubtile; j < startSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i - startSubtile + cutSizeSubtile + cutStartSubtile, j - startSubtile + cutSizeSubtile + cutStartSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile; j < newSubtilesCount; j++) 
+				{
+					newPixMapItems(i, j) = pixMapItems(i - startSubtile + cutSizeSubtile + cutStartSubtile, j);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				cumulativeX += rowPartition[i].size();
+			}
+			for(int i = startSubtile; i < newSubtilesCount; i++)
+			{
+				int cumulativeY = 0;
+				for(int j = 0; j < cutStartSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = cutStartSubtile; j < startSubtile - cutSizeSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j + cutSizeSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile - cutSizeSubtile; j < startSubtile; j++)
+				{
+					newPixMapItems(i, j) = pixMapItems(i, j - startSubtile + cutSizeSubtile + cutStartSubtile);
+					newPixMapItems(i, j)->setPos(cumulativeX, cumulativeY);
+					cumulativeY += rowPartition[j].size();
+				}
+				for(int j = startSubtile; j < newSubtilesCount; j++) newPixMapItems(i, j) = pixMapItems(i, j);
+				cumulativeX += rowPartition[i].size();
+			}
+		}
+		columnIndices = rowIndices;
+		columnPartition = rowPartition;
+
+		//No need to delete anything here, because we're just re-arranging the image bits. 
+		pixMapItems.swap(newPixMapItems);
 	}
 }
