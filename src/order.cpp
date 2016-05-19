@@ -6,16 +6,9 @@
 #include <Rcpp.h>
 namespace mpMapInteractive
 {
-	void order(unsigned char* originalRawData, std::vector<double>& levels, int nOriginalMarkers, const std::vector<int>& permutation, int startIndex, int endIndex, std::vector<int>& resultingPermutation)
+	void rawSymmetricMatrixToDense(double* mem, unsigned char* originalRawData, std::vector<double>& levels, int nOriginalMarkers, const std::vector<int>& permutation, int startIndex, int endIndex, bool& nonZero)
 	{
 		int nSubMarkers = endIndex - startIndex;
-		Rcpp::NumericMatrix subMatrix(nSubMarkers, nSubMarkers);
-
-		Rcpp::Function asDist("as.dist"), seriate("seriate"), getOrder("get_order"), criterion("criterion");
-		
-		double* mem = &(subMatrix(0,0));
-		//Determine whether or not the submatrix is zero, as seriation seems to screw up for all-zero matrices.
-		bool nonZero = false;
 		for(int i = 0; i < nSubMarkers; i++)
 		{
 			for(int j = 0; j < nSubMarkers; j++)
@@ -27,6 +20,18 @@ namespace mpMapInteractive
 				nonZero |= (*dest != 0);
 			}
 		}
+	}
+	void order(unsigned char* originalRawData, std::vector<double>& levels, int nOriginalMarkers, const std::vector<int>& permutation, int startIndex, int endIndex, std::vector<int>& resultingPermutation)
+	{
+		int nSubMarkers = endIndex - startIndex;
+		Rcpp::NumericMatrix subMatrix(nSubMarkers, nSubMarkers);
+
+		Rcpp::Function asDist("as.dist"), seriate("seriate"), getOrder("get_order"), criterion("criterion");
+		
+		double* mem = &(subMatrix(0,0));
+		//Determine whether or not the submatrix is zero, as seriation seems to screw up for all-zero matrices.
+		bool nonZero = false;
+		rawSymmetricMatrixToDense(mem, originalRawData, levels, nOriginalMarkers, permutation, startIndex, endIndex, nonZero);
 		if(nonZero)
 		{
 			Rcpp::RObject distSubMatrix = asDist(Rcpp::Named("m") = subMatrix);

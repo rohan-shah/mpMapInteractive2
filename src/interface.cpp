@@ -35,20 +35,7 @@ extern "C"
 			ss << "Invalid mpcrossLG object. Please ensure that validObject returns TRUE." << std::endl;
 			throw Rcpp::exception(ss.str().c_str());
 		}
-		Rcpp::Function markerNamesFunc("markers");
-		std::vector<std::string> markerNames = Rcpp::as<std::vector<std::string> >(markerNamesFunc(mpcross));
-		try
-		{
-			rf = Rcpp::as<Rcpp::S4>(mpcross.slot("rf"));
-		}
-		catch(...)
-		{
-			throw Rcpp::not_compatible("Input mpcross@rf must be an S4 object");
-		}
-		if(!rf.is("rf"))
-		{
-			throw Rcpp::not_compatible("Input mpcross@rf must extend class rf");
-		}
+
 		try
 		{
 			lg = Rcpp::as<Rcpp::S4>(mpcross.slot("lg"));
@@ -61,14 +48,61 @@ extern "C"
 		{
 			throw Rcpp::not_compatible("Input mpcross@lg must extend class lg");
 		}
+
+		Rcpp::Function markerNamesFunc("markers");
+		std::vector<std::string> markerNames = Rcpp::as<std::vector<std::string> >(markerNamesFunc(mpcross));
+
+		bool hasRF;
 		Rcpp::S4 theta;
-		try
+		Rcpp::RawVector thetaData;
+		Rcpp::NumericVector thetaLevels;
+		std::vector<double> thetaLevelsVector;
+		if(Rcpp::as<Rcpp::RObject>(mpcross.slot("rf")).isNULL())
 		{
-			theta = Rcpp::as<Rcpp::S4>(rf.slot("theta"));
+			hasRF = false;
 		}
-		catch(...)
+		else
 		{
-			throw Rcpp::not_compatible("Input mpcross@rf@theta must be a numeric matrix");
+			try
+			{
+				rf = Rcpp::as<Rcpp::S4>(mpcross.slot("rf"));
+			}
+			catch(...)
+			{
+				throw Rcpp::not_compatible("Input mpcross@rf must be an S4 object");
+			}
+			if(!rf.is("rf"))
+			{
+				throw Rcpp::not_compatible("Input mpcross@rf must extend class rf");
+			}
+			try
+			{
+				theta = Rcpp::as<Rcpp::S4>(rf.slot("theta"));
+			}
+			catch(...)
+			{
+				throw Rcpp::not_compatible("Input mpcross@rf@theta must be a numeric matrix");
+			}
+
+			try
+			{
+				thetaData = theta.slot("data");
+			}
+			catch(...)
+			{
+				throw Rcpp::not_compatible("Input mpcross@rf@theta@data must be a raw vector");
+			}
+
+			try
+			{
+				thetaLevels = theta.slot("levels");
+			}
+			catch(...)
+			{
+				throw Rcpp::not_compatible("Input mpcross@rf@theta@levels must be a numeric vector");
+			}
+			thetaLevelsVector = Rcpp::as<std::vector<double> >(thetaLevels);
+			hasRF = true;
 		}
 		
 		std::vector<int> groups;
@@ -91,26 +125,6 @@ extern "C"
 			throw Rcpp::not_compatible("Input mpcross@lg@allGroups must be an integer vector");
 		}
 		
-		Rcpp::RawVector thetaData;
-		try
-		{
-			thetaData = theta.slot("data");
-		}
-		catch(...)
-		{
-			throw Rcpp::not_compatible("Input mpcross@rf@theta@data must be a raw vector");
-		}
-
-		Rcpp::NumericVector thetaLevels;
-		try
-		{
-			thetaLevels = theta.slot("levels");
-		}
-		catch(...)
-		{
-			throw Rcpp::not_compatible("Input mpcross@rf@theta@levels must be a numeric vector");
-		}
-		std::vector<double> thetaLevelsVector = Rcpp::as<std::vector<double> >(thetaLevels);
 
 		unsigned char* imputedRawImageData = NULL;
 		if(allGroups.size() == 1)
@@ -121,14 +135,26 @@ extern "C"
 				try
 				{
 					Rcpp::List imputedTheta = Rcpp::as<Rcpp::List>(imputedThetaObj);
-					Rcpp::S4 imputedThetaMatrix = Rcpp::as<Rcpp::S4>(imputedTheta(0));
-					Rcpp::RawVector data = Rcpp::as<Rcpp::RawVector>(imputedThetaMatrix.slot("data"));
-					imputedRawImageData = new unsigned char[data.size()];
-					memcpy(imputedRawImageData, &(data(0)), sizeof(unsigned char)*data.size());
+					theta = Rcpp::as<Rcpp::S4>(imputedTheta(0));
+					thetaData = Rcpp::as<Rcpp::RawVector>(theta.slot("data"));
+					thetaLevelsVector = Rcpp::as<std::vector<double> >(theta.slot("levels"));
+					imputedRawImageData = new unsigned char[thetaData.size()];
+					memcpy(imputedRawImageData, &(thetaData(0)), sizeof(unsigned char)*thetaData.size());
 				}
 				catch(...)
-				{}
+				{
+					delete[] imputedRawImageData;
+					throw std::runtime_error("Error while reading the imputed data in mpcross@lg@imputedTheta");
+				}
 			}
+			else if(!hasRF)
+			{
+				throw std::runtime_error("Input mpcross@rf must be present");
+			}
+		}
+		else if(!hasRF)
+		{
+			throw std::runtime_error("Input mpcross@rf must be present if there is more than one group");
 		}
 
 		//check the auxillary numeric matrix

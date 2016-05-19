@@ -1,6 +1,7 @@
 #include "plotModeObject.h"
 class QFrame;
 class QGraphicsRectItem;
+class QLineEdit;
 namespace mpMapInteractive
 {
 	struct intervalMode : public plotModeObject
@@ -26,5 +27,6 @@ namespace mpMapInteractive
 		QGraphicsRectItem* highlight;
 		int start, end;
 		int cutStart, cutEnd;
+		QLineEdit* orderingEdit;
 	};
 }
