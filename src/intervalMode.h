@@ -2,6 +2,7 @@
 class QFrame;
 class QGraphicsRectItem;
 class QLineEdit;
+class QLabel;
 namespace mpMapInteractive
 {
 	struct intervalMode : public plotModeObject
@@ -28,5 +29,6 @@ namespace mpMapInteractive
 		int start, end;
 		int cutStart, cutEnd;
 		QLineEdit* orderingEdit;
+		QLabel* undoLabel, *orderLabel, *reverseLabel, *clusterOrderLabel;
 	};
 }

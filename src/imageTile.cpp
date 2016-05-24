@@ -100,6 +100,13 @@ namespace mpMapInteractive
 				correspondingOldTiles.push_back(-1);
 				newPartitionEntry->push_back(rowIndices[counter]);
 				hasOldTile = false;
+				if(rowIndices[counter] == previousPartitionIterator->back())
+				{
+					correspondingOldTiles.push_back(-1);
+					newPartitionEntry++;
+					hasOldTile = true;
+					previousPartitionIterator++;
+				}
 			}
 			else if(rowIndices[counter] == previousPartitionIterator->back())
 			{

@@ -7,6 +7,10 @@ namespace mpMapInteractive
 	{
 		return (int)originalGroups.size();
 	}
+	int qtPlotData::stackLength() const
+	{
+		return cumulativePermutations.size();
+	}
 	int qtPlotData::getMarkerCount() const
 	{
 		if(cumulativePermutations.size() == 0)
@@ -20,12 +24,12 @@ namespace mpMapInteractive
 		if(groups.size() == 0) return originalGroups;
 		return groups[groups.size()-1];
 	}
-	int qtPlotData::startOfGroup(int group)
+	int qtPlotData::startOfGroup(int group) const
 	{
 		const std::vector<int>& currentGroups = getCurrentGroups();
 		return std::distance(currentGroups.begin(), std::find(currentGroups.begin(), currentGroups.end(), group));
 	}
-	bool qtPlotData::singleGroup()
+	bool qtPlotData::singleGroup() const
 	{
 		const std::vector<int>& currentGroups = getCurrentGroups();
 		int group = currentGroups[0];
@@ -35,7 +39,7 @@ namespace mpMapInteractive
 		}
 		return true;
 	}
-	int qtPlotData::endOfGroup(int group)
+	int qtPlotData::endOfGroup(int group) const
 	{
 		const std::vector<int>& currentGroups = getCurrentGroups();
 		return std::distance(currentGroups.begin(), std::find(currentGroups.rbegin(), currentGroups.rend(), group).base());

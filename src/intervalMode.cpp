@@ -17,25 +17,29 @@ namespace mpMapInteractive
 		frame = new QFrame;
 		QFormLayout* formLayout = new QFormLayout;
 		
-		QLabel* undoLabel = new QLabel(QString("Undo (Ctrl + U)"));
+		undoLabel = new QLabel(QString("Undo (Ctrl + U)"));
 		//set up pallete to highlight enabled labels / shortcuts
 		QPalette p = undoLabel->palette();
 		p.setColor(QPalette::Active, QPalette::WindowText, QColor("blue"));
 		undoLabel->setPalette(p);
+		undoLabel->setEnabled(false);
 		formLayout->addRow(undoLabel, new QLabel(""));
 
-		QLabel* orderLabel = new QLabel(QString("Order (Ctrl + O)"));
+		orderLabel = new QLabel(QString("Order (Ctrl + O)"));
 		orderLabel->setPalette(p);
+		orderLabel->setEnabled(false);
 		formLayout->addRow(orderLabel, new QLabel(""));
 
-		QLabel* reverseLabel = new QLabel(QString("Reverse (Ctrl + R)"));
+		reverseLabel = new QLabel(QString("Reverse (Ctrl + R)"));
 		orderLabel->setPalette(p);
+		orderLabel->setEnabled(false);
 		formLayout->addRow(reverseLabel, new QLabel(""));
 
-		QLabel* clusterOrderLabel = new QLabel(QString("Groups for hclust ordering"));
+		clusterOrderLabel = new QLabel(QString("Order using hclust (Ctrl + H)"));
 		clusterOrderLabel->setPalette(p);
 		orderingEdit = new QLineEdit;
 		orderingEdit->setValidator(new QIntValidator());
+		clusterOrderLabel->setEnabled(false);
 		formLayout->addRow(clusterOrderLabel, orderingEdit);
 
 		frame->setLayout(formLayout);
@@ -71,6 +75,7 @@ namespace mpMapInteractive
 	{
 		start = end = -1;
 		deleteHighlighting();
+		undoLabel->setEnabled(data.stackLength() != 0);
 		frame->show();
 	}
 	void intervalMode::leaveMode()
@@ -137,7 +142,7 @@ namespace mpMapInteractive
 				plotObject->endComputation();
 			}
 		}
-		else if(event->key() == Qt::Key_L && (event->modifiers() & Qt::ControlModifier))
+		else if(event->key() == Qt::Key_H && (event->modifiers() & Qt::ControlModifier))
 		{
 			clearCut();
 			//See documentation for attemptBeginComputation
@@ -324,13 +329,13 @@ endComputation:
 			if(QApplication::keyboardModifiers() & Qt::ShiftModifier && start > -1)
 			{
 				clearCut();
-				end = x;
+				end = std::max(0, std::min(x, nMarkers-1));
 				addHighlighting();
 			}
 			else
 			{
 				deleteHighlighting();
-				start = x;
+				start = std::max(0, std::min(x, nMarkers-1));
 				end = -1;
 			}
 		}
