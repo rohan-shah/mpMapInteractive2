@@ -29,6 +29,6 @@ namespace mpMapInteractive
 		int start, end;
 		int cutStart, cutEnd;
 		QLineEdit* orderingEdit;
-		QLabel* undoLabel, *orderLabel, *reverseLabel, *clusterOrderLabel;
+		QLabel* undoLabel, *orderLabel, *reverseLabel, *clusterOrderLabel, *cutLabel, *pasteLabel;
 	};
 }

@@ -42,6 +42,16 @@ namespace mpMapInteractive
 		clusterOrderLabel->setEnabled(false);
 		formLayout->addRow(clusterOrderLabel, orderingEdit);
 
+		cutLabel = new QLabel(QString("Cut (Ctrl + X)"));
+		cutLabel->setPalette(p);
+		cutLabel->setEnabled(false);
+		formLayout->addRow(cutLabel, new QLabel(""));
+
+		pasteLabel = new QLabel(QString("Paste (Ctrl + V)"));
+		pasteLabel->setPalette(p);
+		pasteLabel->setEnabled(false);
+		formLayout->addRow(pasteLabel, new QLabel(""));
+
 		frame->setLayout(formLayout);
 	}
 	void intervalMode::deleteHighlighting()
@@ -114,7 +124,6 @@ namespace mpMapInteractive
 					doImputation(data.getCurrentGroups()[0]);
 				}
 				//permutation from just the submatrix
-				std::vector<int> resultingPermutation;
 				const std::vector<int>& currentPermutation = data.getCurrentPermutation();
 				{
 					int newStart = std::min(start, end);
@@ -126,9 +135,24 @@ namespace mpMapInteractive
 				//The ordering code crashes with only one or two markers
 				if(nSubMarkers >= 3)
 				{
-					order(*imputedRawData, levels, nOriginalMarkers, currentPermutation, start, end+1, resultingPermutation);
-					//and the conversion of the submatrix permutation to the bigger matrix
+					//Extract the subset and turn it into a dense matrix (rather than storing just the upper triangle)
+					std::vector<unsigned char> copiedSubset((end - start + 1)*(end - start + 1), 0);
+					for(R_xlen_t i = start; i < end+1; i++)
+					{
+						for(R_xlen_t j = start; j <= i; j++)
+						{
+							int copied1 = currentPermutation[i], copied2 = currentPermutation[j];
+							if(copied1 < copied2) std::swap(copied1, copied2);
+							copiedSubset[(i - start)*(end - start + 1) + (j - start)] = copiedSubset[(j - start)*(end - start + 1) + (i - start)] = (*imputedRawData)[copied1*(copied1 + 1)/2 + copied2];
+						}
+					}
+					std::vector<int> resultingPermutation;
+					typedef void (*arsaRawExportedType)(std::vector<double>&, std::vector<int>&, long, Rbyte*, double, double, long, std::function<void(unsigned long,unsigned long)>, bool, int, double);
+					arsaRawExportedType arsaRawExported = (arsaRawExportedType)R_GetCCallable("mpMap2", "arsaRawExported");
 					std::vector<int> totalPermutation;
+
+					std::function<void(unsigned long,unsigned long)> noProgress = [](unsigned long, unsigned long){};
+					arsaRawExported(levels, resultingPermutation, end - start + 1, &copiedSubset.front(), 0.5, 0.1, 1, noProgress, true, -1, 1);
 					int nMarkers = data.getMarkerCount();
 					totalPermutation.reserve(nMarkers);
 					for(int i = 0; i < nMarkers; i++) totalPermutation.push_back(i);
