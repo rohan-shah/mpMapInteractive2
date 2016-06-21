@@ -28,7 +28,7 @@ namespace mpMapInteractive
 		QGraphicsRectItem* highlight;
 		int start, end;
 		int cutStart, cutEnd;
-		QLineEdit* orderingEdit;
-		QLabel* undoLabel, *orderLabel, *reverseLabel, *clusterOrderLabel, *cutLabel, *pasteLabel;
+		QLineEdit* clusterOrderGroupsEdit, *effortEdit, *maxDistEdit;
+		QLabel* undoLabel, *orderLabel, *reverseLabel, *clusterOrderLabel, *cutLabel, *pasteLabel, *effortLabel, *clusterOrderGroupsLabel, *maxDistLabel;
 	};
 }

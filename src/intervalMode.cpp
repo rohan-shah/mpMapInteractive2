@@ -20,8 +20,31 @@ namespace mpMapInteractive
 		undoLabel = new QLabel(QString("Undo (Ctrl + U)"));
 		formLayout->addRow(undoLabel, new QLabel(""));
 
+		{
+			QFrame* seperator = new QFrame;
+			seperator->setFrameShape(QFrame::HLine);
+			seperator->setFrameShadow(QFrame::Sunken);
+			formLayout->addRow(seperator);
+		}
+
 		orderLabel = new QLabel(QString("Order (Ctrl + O)"));
-		formLayout->addRow(orderLabel, new QLabel(""));
+		formLayout->addRow(orderLabel);
+		effortLabel = new QLabel("Effort multiplier:");
+		effortEdit = new QLineEdit;
+		effortEdit->setValidator(new QDoubleValidator());
+		formLayout->addRow(effortLabel, effortEdit);
+
+		maxDistEdit = new QLineEdit;
+		maxDistEdit->setValidator(new QIntValidator());
+		maxDistLabel = new QLabel("Max shift size:");
+		formLayout->addRow(maxDistLabel, maxDistEdit);
+
+		{
+			QFrame* seperator = new QFrame;
+			seperator->setFrameShape(QFrame::HLine);
+			seperator->setFrameShadow(QFrame::Sunken);
+			formLayout->addRow(seperator);
+		}
 
 		reverseLabel = new QLabel(QString("Reverse (Ctrl + R)"));
 		formLayout->addRow(reverseLabel, new QLabel(""));
@@ -36,9 +59,10 @@ namespace mpMapInteractive
 		clusterOrderLabel = new QLabel(QString("Order using hclust (Ctrl + H)"));
 		formLayout->addRow(clusterOrderLabel);
 
-		orderingEdit = new QLineEdit;
-		orderingEdit->setValidator(new QIntValidator());
-		formLayout->addRow(new QLabel("Number of groups"), orderingEdit);
+		clusterOrderGroupsEdit = new QLineEdit;
+		clusterOrderGroupsEdit->setValidator(new QIntValidator());
+		clusterOrderGroupsLabel = new QLabel("Number of groups");
+		formLayout->addRow(clusterOrderGroupsLabel, clusterOrderGroupsEdit);
 
 		{
 			QFrame* seperator = new QFrame;
@@ -128,6 +152,21 @@ namespace mpMapInteractive
 					start = newStart;
 					end = newEnd;
 				}
+				double effortMultiple = 1;
+				int maxMove = -1;
+				try
+				{
+					effortMultiple = std::stod(effortEdit->text().toStdString());
+				}
+				catch(...){}
+				if(effortMultiple <= 0) effortMultiple = 1;
+				try
+				{
+					maxMove = std::stod(maxDistEdit->text().toStdString());
+				}
+				catch(...){}
+				if(maxMove <= 0) maxMove = -1;
+
 				int nSubMarkers = end + 1 - start;
 				//The ordering code crashes with only one or two markers
 				if(nSubMarkers >= 3)
@@ -149,7 +188,7 @@ namespace mpMapInteractive
 					std::vector<int> totalPermutation;
 
 					std::function<void(unsigned long,unsigned long)> noProgress = [](unsigned long, unsigned long){};
-					arsaRawExported(levels, resultingPermutation, nSubMarkers, &copiedSubset.front(), 0.5, 0.1, 1, noProgress, true, -1, 1);
+					arsaRawExported(levels, resultingPermutation, nSubMarkers, &copiedSubset.front(), 0.5, 0.1, 1, noProgress, true, maxMove, effortMultiple);
 					int nMarkers = data.getMarkerCount();
 					totalPermutation.reserve(nMarkers);
 					for(int i = 0; i < nMarkers; i++) totalPermutation.push_back(i);
@@ -191,7 +230,12 @@ namespace mpMapInteractive
 				if(nSubMarkers >= 3)
 				{
 					//Number of groups for hierarchical clustering
-					int nGroups = std::atoi(orderingEdit->text().toStdString().c_str());
+					int nGroups = 0;
+					try
+					{	
+						nGroups = std::stoi(clusterOrderGroupsEdit->text().toStdString());
+					}
+					catch(...){}
 					if(nGroups == 0) goto endComputation;
 					
 					bool nonZero = false;
@@ -349,6 +393,16 @@ endComputation:
 		reverseLabel->setEnabled(start != -1 && end != -1);
 		cutLabel->setEnabled(start != -1 && end != -1);
 		pasteLabel->setEnabled(cutStart != -1 && cutEnd != -1 && start != -1 && end == -1);
+
+		effortLabel->setEnabled(start != -1 && end != -1);
+		effortEdit->setEnabled(start != -1 && end != -1);
+		
+		clusterOrderLabel->setEnabled(start != -1 && end != -1);
+		clusterOrderGroupsEdit->setEnabled(start != -1 && end != -1);
+		clusterOrderGroupsLabel->setEnabled(start != -1 && end != -1);
+
+		maxDistEdit->setEnabled(start != -1 && end != -1);
+		maxDistLabel->setEnabled(start != -1 && end != -1);
 	}
 	void intervalMode::mousePressed(int x, int y, Qt::MouseButtons pressed)
 	{
@@ -361,7 +415,6 @@ endComputation:
 		{
 			if(QApplication::keyboardModifiers() & Qt::ShiftModifier && start > -1)
 			{
-				cutStart = cutEnd = -1;
 				end = std::max(0, std::min(x, nMarkers-1));
 				addHighlighting();
 			}
