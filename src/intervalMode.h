@@ -21,7 +21,7 @@ namespace mpMapInteractive
 		virtual void leaveFocus();
 		QFrame* frame;
 	private:
-		void clearCut();
+		void updateChoices();
 		void constructFrame();
 		void deleteHighlighting();
 		void addHighlighting();

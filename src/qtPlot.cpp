@@ -16,7 +16,6 @@
 #include <QComboBox>
 #include <QStandardItemModel>
 #include <QApplication>
-#include "order.h"
 #include <stdexcept>
 #include <cmath>
 #include "singleMode.h"

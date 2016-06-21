@@ -8,8 +8,8 @@
 #include <QApplication>
 #include <QIntValidator>
 #include "qtPlot.h"
-#include "order.h"
 #include <Rcpp.h>
+#include "order.h"
 namespace mpMapInteractive
 {
 	void intervalMode::constructFrame()
@@ -87,15 +87,12 @@ namespace mpMapInteractive
 		deleteHighlighting();
 		undoLabel->setEnabled(data.stackLength() != 0);
 		frame->show();
+		updateChoices();
 	}
 	void intervalMode::leaveMode()
 	{
 		frame->hide();
 		deleteHighlighting();
-	}
-	void intervalMode::clearCut()
-	{
-		cutStart = cutEnd = -1;
 	}
 	void intervalMode::keyPressEvent(QKeyEvent* event)
 	{
@@ -104,13 +101,12 @@ namespace mpMapInteractive
 			data.undo();
 			plotObject->dataChanged();
 			deleteHighlighting();
-			start = -1;
-			end = -1;
-			clearCut();
+			cutStart = cutEnd = start = end = -1;
+			updateChoices();
 		}
 		else if(event->key() == Qt::Key_O && (event->modifiers() & Qt::ControlModifier))
 		{
-			clearCut();
+			cutStart = cutEnd = -1;
 			//See documentation for attemptBeginComputation
 			if(start > -1 && end > -1 && plotObject->attemptBeginComputation())
 			{
@@ -165,10 +161,11 @@ namespace mpMapInteractive
 				}
 				plotObject->endComputation();
 			}
+			updateChoices();
 		}
 		else if(event->key() == Qt::Key_H && (event->modifiers() & Qt::ControlModifier))
 		{
-			clearCut();
+			cutStart = cutEnd = -1;
 			//See documentation for attemptBeginComputation
 			if(start > -1 && end > -1 && plotObject->attemptBeginComputation())
 			{
@@ -252,11 +249,11 @@ namespace mpMapInteractive
 endComputation:
 				plotObject->endComputation();
 			}
+			updateChoices();
 		}
-
 		else if(event->key() == Qt::Key_R && (event->modifiers() & Qt::ControlModifier))
 		{
-			clearCut();
+			cutStart = cutEnd = -1;
 			if(start > -1 && end > -1 && plotObject->attemptBeginComputation()) 
 			{
 				{
@@ -273,6 +270,7 @@ endComputation:
 				plotObject->dataChanged();
 				plotObject->endComputation();
 			}
+			updateChoices();
 		}
 		else if(event->key() == Qt::Key_X && (event->modifiers() & Qt::ControlModifier))
 		{
@@ -283,15 +281,16 @@ endComputation:
 				start = end = -1;
 				deleteHighlighting();
 			}
+			updateChoices();
 		}
 		else if(event->key() == Qt::Key_V && (event->modifiers() & Qt::ControlModifier))
 		{
-			if(cutEnd > -1 && cutStart > -1)
+			if(cutEnd > -1 && cutStart > -1 && start != -1 && end == -1)
 			{
 				//If we're putting the cut region back in the same spot, then do nothing. 
 				if(start >= cutStart && start <= cutEnd+1)
 				{
-					clearCut();
+					cutStart = cutEnd = -1;
 				}
 				else
 				{
@@ -336,10 +335,19 @@ endComputation:
 					end = -1;
 					deleteHighlighting();
 					plotObject->dataChanged();
-					clearCut();
+					cutStart = cutEnd = -1;
 				}
 			}
+			updateChoices();
 		}
+	}
+	void intervalMode::updateChoices()
+	{
+		undoLabel->setEnabled(data.stackLength() > 0);
+		orderLabel->setEnabled(start != -1 && end != -1);
+		reverseLabel->setEnabled(start != -1 && end != -1);
+		cutLabel->setEnabled(start != -1 && end != -1);
+		pasteLabel->setEnabled(cutStart != -1 && cutEnd != -1 && start != -1 && end == -1);
 	}
 	void intervalMode::mousePressed(int x, int y, Qt::MouseButtons pressed)
 	{
@@ -352,7 +360,7 @@ endComputation:
 		{
 			if(QApplication::keyboardModifiers() & Qt::ShiftModifier && start > -1)
 			{
-				clearCut();
+				cutStart = cutEnd = -1;
 				end = std::max(0, std::min(x, nMarkers-1));
 				addHighlighting();
 			}
@@ -363,6 +371,7 @@ endComputation:
 				end = -1;
 			}
 		}
+		updateChoices();
 	}
 	void intervalMode::mouseMove(int x, int y)
 	{
