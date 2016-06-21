@@ -10,6 +10,7 @@
 #include "qtPlot.h"
 #include <Rcpp.h>
 #include "order.h"
+#include <QCheckBox>
 namespace mpMapInteractive
 {
 	void intervalMode::constructFrame()
@@ -38,6 +39,9 @@ namespace mpMapInteractive
 		maxDistEdit->setValidator(new QIntValidator());
 		maxDistLabel = new QLabel("Max shift size:");
 		formLayout->addRow(maxDistLabel, maxDistEdit);
+
+		randomStartCheckbox = new QCheckBox("Random start");
+		formLayout->addRow(randomStartCheckbox);
 
 		{
 			QFrame* seperator = new QFrame;
@@ -167,6 +171,8 @@ namespace mpMapInteractive
 				catch(...){}
 				if(maxMove <= 0) maxMove = -1;
 
+				bool randomStart = randomStartCheckbox->isChecked();
+
 				int nSubMarkers = end + 1 - start;
 				//The ordering code crashes with only one or two markers
 				if(nSubMarkers >= 3)
@@ -188,7 +194,7 @@ namespace mpMapInteractive
 					std::vector<int> totalPermutation;
 
 					std::function<void(unsigned long,unsigned long)> noProgress = [](unsigned long, unsigned long){};
-					arsaRawExported(levels, resultingPermutation, nSubMarkers, &copiedSubset.front(), 0.5, 0.1, 1, noProgress, true, maxMove, effortMultiple);
+					arsaRawExported(levels, resultingPermutation, nSubMarkers, &copiedSubset.front(), 0.5, 0.1, 1, noProgress, randomStart, maxMove, effortMultiple);
 					int nMarkers = data.getMarkerCount();
 					totalPermutation.reserve(nMarkers);
 					for(int i = 0; i < nMarkers; i++) totalPermutation.push_back(i);
@@ -389,19 +395,20 @@ endComputation:
 	void intervalMode::updateChoices()
 	{
 		undoLabel->setEnabled(data.stackLength() > 0);
-		orderLabel->setEnabled(start != -1 && end != -1);
 		reverseLabel->setEnabled(start != -1 && end != -1);
 		cutLabel->setEnabled(start != -1 && end != -1);
 		pasteLabel->setEnabled(cutStart != -1 && cutEnd != -1 && start != -1 && end == -1);
 
-		effortLabel->setEnabled(start != -1 && end != -1);
-		effortEdit->setEnabled(start != -1 && end != -1);
-		
 		clusterOrderLabel->setEnabled(start != -1 && end != -1);
 		clusterOrderGroupsEdit->setEnabled(start != -1 && end != -1);
 		clusterOrderGroupsLabel->setEnabled(start != -1 && end != -1);
 
+		//Order related stuff
+		effortLabel->setEnabled(start != -1 && end != -1);
+		effortEdit->setEnabled(start != -1 && end != -1);
+		orderLabel->setEnabled(start != -1 && end != -1);
 		maxDistEdit->setEnabled(start != -1 && end != -1);
+		randomStartCheckbox->setEnabled(start != -1 && end != -1);
 		maxDistLabel->setEnabled(start != -1 && end != -1);
 	}
 	void intervalMode::mousePressed(int x, int y, Qt::MouseButtons pressed)

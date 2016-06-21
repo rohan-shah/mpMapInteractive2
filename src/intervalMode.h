@@ -3,6 +3,7 @@ class QFrame;
 class QGraphicsRectItem;
 class QLineEdit;
 class QLabel;
+class QCheckBox;
 namespace mpMapInteractive
 {
 	struct intervalMode : public plotModeObject
@@ -30,5 +31,6 @@ namespace mpMapInteractive
 		int cutStart, cutEnd;
 		QLineEdit* clusterOrderGroupsEdit, *effortEdit, *maxDistEdit;
 		QLabel* undoLabel, *orderLabel, *reverseLabel, *clusterOrderLabel, *cutLabel, *pasteLabel, *effortLabel, *clusterOrderGroupsLabel, *maxDistLabel;
+		QCheckBox *randomStartCheckbox;
 	};
 }
