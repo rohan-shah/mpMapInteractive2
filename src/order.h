@@ -9,6 +9,5 @@
 namespace mpMapInteractive
 {
 	void rawSymmetricMatrixToDense(double* mem, unsigned char* originalRawData, std::vector<double>& levels, int nOriginalMarkers, const std::vector<int>& permutation, int startIndex, int endIndex, bool& nonZero);
-	void order(unsigned char* originalRawData, std::vector<double>& levels, int nOriginalMarkers, const std::vector<int>& permutation, int startIndex, int endIndex, std::vector<int>& resultingPermutation);
 }
 #endif

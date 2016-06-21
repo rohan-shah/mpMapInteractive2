@@ -12,7 +12,6 @@ Collate:
    'mpMapInteractive2.R'
    'Rcpp_exceptions.R'
 Depends:
-    seriation,
     Rcpp,
     mpMap2
 LinkingTo: Rcpp

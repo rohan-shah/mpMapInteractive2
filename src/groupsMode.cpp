@@ -9,6 +9,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QProgressBar>
+#include <Rcpp.h>
 namespace mpMapInteractive
 {
 	void groupsMode::constructFrame()
@@ -241,6 +242,14 @@ namespace mpMapInteractive
 					int nMarkers = data.getOriginalMarkerCount();
 					std::vector<int> totalResultingPermutation;
 					totalResultingPermutation.resize(nMarkers);
+					for(int i = 0; i < nMarkers; i++)
+					{
+						totalResultingPermutation[i] = i;
+					}
+
+					typedef void (*arsaRawExportedType)(std::vector<double>&, std::vector<int>&, long, Rbyte*, double, double, long, std::function<void(unsigned long,unsigned long)>, bool, int, double);
+					arsaRawExportedType arsaRawExported = (arsaRawExportedType)R_GetCCallable("mpMap2", "arsaRawExported");
+					std::function<void(unsigned long,unsigned long)> noProgress = [](unsigned long, unsigned long){};
 					for(int groupCounter = 0; groupCounter < nGroups; groupCounter++)
 					{
 						if(std::find(exceptionsList.begin(), exceptionsList.end(), uniqueGroups[groupCounter]) != exceptionsList.end()) continue;
@@ -251,25 +260,28 @@ namespace mpMapInteractive
 						//The ordering code crashes with only one or two markers. So avoid that case. 
 						if(nSubMarkers >= 3)
 						{
-							//get out the permutation that is going to be applied just to this bit
-							std::vector<int> resultingPermutation;
-							order(*imputedRawData, levels, nOriginalMarkers, currentPermutation, startOfGroup, endOfGroup, resultingPermutation);
-						
-							//extend this to a permutation that will be applied to the whole matrix
-							//mostly it's the identity, because we're only ordering a small part of the matrix in this step
-							for(int i = 0; i < nMarkers; i++)
+							//Extract the subset and turn it into a dense matrix (rather than storing just the upper triangle)
+							std::vector<unsigned char> copiedSubset(nSubMarkers*nSubMarkers, 0);
+							for(R_xlen_t i = startOfGroup; i < endOfGroup; i++)
 							{
-								totalResultingPermutation[i] = i;
+								for(R_xlen_t j = startOfGroup; j <= i; j++)
+								{
+									int copied1 = currentPermutation[i], copied2 = currentPermutation[j];
+									if(copied1 < copied2) std::swap(copied1, copied2);
+									copiedSubset[(i - startOfGroup)*nSubMarkers + (j - startOfGroup)] = copiedSubset[(j - startOfGroup)*nSubMarkers + (i - startOfGroup)] = (*imputedRawData)[copied1*(copied1 + 1)/2 + copied2];
+								}
 							}
-							//...but part is not the identity
+							std::vector<int> resultingPermutation;
+							arsaRawExported(levels, resultingPermutation, nSubMarkers, &copiedSubset.front(), 0.5, 0.1, 1, noProgress, true, -1, 1);
+						
 							for(int i = 0; i < nSubMarkers; i++)
 							{
 								totalResultingPermutation[i + startOfGroup] = startOfGroup + resultingPermutation[i];
 							}
-							data.applyPermutation(totalResultingPermutation, data.getCurrentGroups());
 						}
 						progress->setValue(groupCounter+1);
 					}
+					data.applyPermutation(totalResultingPermutation, data.getCurrentGroups());
 					plotObject->dataChanged();
 					plotObject->deleteProgressBar(progress);
 				}
