@@ -18,38 +18,39 @@ namespace mpMapInteractive
 		QFormLayout* formLayout = new QFormLayout;
 		
 		undoLabel = new QLabel(QString("Undo (Ctrl + U)"));
-		//set up pallete to highlight enabled labels / shortcuts
-		QPalette p = undoLabel->palette();
-		p.setColor(QPalette::Active, QPalette::WindowText, QColor("blue"));
-		undoLabel->setPalette(p);
-		undoLabel->setEnabled(false);
 		formLayout->addRow(undoLabel, new QLabel(""));
 
 		orderLabel = new QLabel(QString("Order (Ctrl + O)"));
-		orderLabel->setPalette(p);
-		orderLabel->setEnabled(false);
 		formLayout->addRow(orderLabel, new QLabel(""));
 
 		reverseLabel = new QLabel(QString("Reverse (Ctrl + R)"));
-		orderLabel->setPalette(p);
-		orderLabel->setEnabled(false);
 		formLayout->addRow(reverseLabel, new QLabel(""));
 
+		{
+			QFrame* seperator = new QFrame;
+			seperator->setFrameShape(QFrame::HLine);
+			seperator->setFrameShadow(QFrame::Sunken);
+			formLayout->addRow(seperator);
+		}
+
 		clusterOrderLabel = new QLabel(QString("Order using hclust (Ctrl + H)"));
-		clusterOrderLabel->setPalette(p);
+		formLayout->addRow(clusterOrderLabel);
+
 		orderingEdit = new QLineEdit;
 		orderingEdit->setValidator(new QIntValidator());
-		clusterOrderLabel->setEnabled(false);
-		formLayout->addRow(clusterOrderLabel, orderingEdit);
+		formLayout->addRow(new QLabel("Number of groups"), orderingEdit);
+
+		{
+			QFrame* seperator = new QFrame;
+			seperator->setFrameShape(QFrame::HLine);
+			seperator->setFrameShadow(QFrame::Sunken);
+			formLayout->addRow(seperator);
+		}
 
 		cutLabel = new QLabel(QString("Cut (Ctrl + X)"));
-		cutLabel->setPalette(p);
-		cutLabel->setEnabled(false);
 		formLayout->addRow(cutLabel, new QLabel(""));
 
 		pasteLabel = new QLabel(QString("Paste (Ctrl + V)"));
-		pasteLabel->setPalette(p);
-		pasteLabel->setEnabled(false);
 		formLayout->addRow(pasteLabel, new QLabel(""));
 
 		frame->setLayout(formLayout);

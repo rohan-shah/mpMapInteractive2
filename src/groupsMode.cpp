@@ -18,48 +18,56 @@ namespace mpMapInteractive
 		//set up layout on left hand side for labels / inputs
 		QFormLayout* formLayout = new QFormLayout;
 
-		QLabel* undoLabel = new QLabel(QString("Undo (Ctrl + U)"));
-		//set up pallete to highlight enabled labels / shortcuts
-		QPalette p = undoLabel->palette();
-		p.setColor(QPalette::Active, QPalette::WindowText, QColor("blue"));
-		undoLabel->setPalette(p);
+		undoLabel = new QLabel(QString("Undo (Ctrl + U)"));
 		formLayout->addRow(undoLabel, new QLabel(""));
 
 		joinGroupsLabel = new QLabel("Join groups (Ctrl + j)");
-		joinGroupsLabel->setEnabled(false);
-		joinGroupsLabel->setPalette(p);
 		formLayout->addRow(joinGroupsLabel, new QLabel(""));
+		
+		{
+			QFrame* seperator = new QFrame;
+			seperator->setFrameShape(QFrame::HLine);
+			seperator->setFrameShadow(QFrame::Sunken);
+			formLayout->addRow(seperator);
+		}
 
-		QHBoxLayout* gotoLayout = new QHBoxLayout;
+		QLabel* gotoLabel = new QLabel("Goto groups (Ctrl + G)");
+		formLayout->addRow(gotoLabel);
+
 		group1Edit = new QLineEdit;
 		group1Edit->setValidator(new QIntValidator());
 		group2Edit = new QLineEdit;
 		group2Edit->setValidator(new QIntValidator());
 		
-		QObject::connect(group1Edit, SIGNAL(returnPressed()), this, SLOT(group1ReturnPressed()));
-		QObject::connect(group2Edit, SIGNAL(returnPressed()), this, SLOT(group2ReturnPressed()));
-		gotoLayout->addWidget(group1Edit);
-		gotoLayout->addWidget(group2Edit);
+		formLayout->addRow(new QLabel("Group 1"), group1Edit);
+		formLayout->addRow(new QLabel("Group 2"), group2Edit);
 
-		QLabel* gotoLabel = new QLabel("Goto groups (Ctrl + G)");
-		gotoLabel->setPalette(p);
-		formLayout->addRow(gotoLabel, gotoLayout);
-		frame->setLayout(formLayout);
 
-		frame->setTabOrder(group1Edit, group2Edit);
-		frame->setTabOrder(group2Edit, group1Edit);
+		{
+			QFrame* seperator = new QFrame;
+			seperator->setFrameShape(QFrame::HLine);
+			seperator->setFrameShadow(QFrame::Sunken);
+			formLayout->addRow(seperator);
+		}
 
 		QLabel* orderLabel = new QLabel("Order all groups except (Ctrl + O)");
-		orderLabel->setEnabled(true);
-		orderLabel->setPalette(p);
 
 		orderAllExcept = new QLineEdit;
 		QRegExp intList(QString("(\\d+\\s*)*"));
 		orderAllExcept->setValidator(new QRegExpValidator(intList));
 		formLayout->addRow(orderLabel, orderAllExcept);
+
+		frame->setLayout(formLayout);
+
+		frame->setTabOrder(group1Edit, group2Edit);
+		frame->setTabOrder(group2Edit, group1Edit);
+
+		QObject::connect(group1Edit, SIGNAL(returnPressed()), this, SLOT(group1ReturnPressed()));
+		QObject::connect(group2Edit, SIGNAL(returnPressed()), this, SLOT(group2ReturnPressed()));
 	}
 	groupsMode::~groupsMode()
 	{
+		delete undoLabel;
 		delete joinGroupsLabel;
 		delete group1Edit;
 		delete group2Edit;
@@ -127,6 +135,7 @@ namespace mpMapInteractive
 			deleteHighlighting();
 			joinGroupsLabel->setEnabled(false);
 		}
+		updateChoices();
 	}
 	void groupsMode::renewHighlighting(int x, int y)
 	{
@@ -186,6 +195,7 @@ namespace mpMapInteractive
 		horizontalGroup = verticalGroup = -1;
 		deleteHighlighting();
 		plotObject->signalMouseMove();
+		updateChoices();
 	}
 	void groupsMode::keyPressEvent(QKeyEvent* event)
 	{
@@ -308,6 +318,7 @@ namespace mpMapInteractive
 		{
 			group1Edit->setFocus();
 		}
+		updateChoices();
 	}
 	void groupsMode::leaveFocus()
 	{
@@ -388,5 +399,10 @@ namespace mpMapInteractive
 		}
 		data.applyPermutation(permutation, newGroups);
 		plotObject->dataChanged();
+	}
+	void groupsMode::updateChoices()
+	{
+		undoLabel->setEnabled(data.stackLength() > 0);
+		joinGroupsLabel->setEnabled(verticalGroup != -1 && horizontalGroup != -1 && horizontalGroup != verticalGroup);
 	}
 }

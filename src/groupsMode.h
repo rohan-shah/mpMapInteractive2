@@ -28,11 +28,12 @@ namespace mpMapInteractive
 		virtual void leaveFocus();
 		QFrame* frame;
 	private:
+		void updateChoices();
 		void joinGroups(int x, int y);
 		void renewHighlighting(int x, int y);
 		void deleteHighlighting();
 		void constructFrame();
-		QLabel* joinGroupsLabel;
+		QLabel* joinGroupsLabel, *undoLabel;
 		QLineEdit* group1Edit, *group2Edit, *orderAllExcept;
 		int horizontalGroup;
 		int verticalGroup;
