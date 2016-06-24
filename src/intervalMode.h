@@ -4,6 +4,7 @@ class QGraphicsRectItem;
 class QLineEdit;
 class QLabel;
 class QCheckBox;
+class QFormLayout;
 namespace mpMapInteractive
 {
 	struct intervalMode : public plotModeObject
@@ -22,6 +23,7 @@ namespace mpMapInteractive
 		virtual void leaveFocus();
 		QFrame* frame;
 	private:
+		static void addSeperator(QFormLayout* formLayout);
 		void updateChoices();
 		void constructFrame();
 		void deleteHighlighting();
@@ -29,8 +31,8 @@ namespace mpMapInteractive
 		QGraphicsRectItem* highlight;
 		int start, end;
 		int cutStart, cutEnd;
-		QLineEdit* clusterOrderGroupsEdit, *effortEdit, *maxDistEdit;
-		QLabel* undoLabel, *orderLabel, *reverseLabel, *clusterOrderLabel, *cutLabel, *pasteLabel, *effortLabel, *clusterOrderGroupsLabel, *maxDistLabel;
+		QLineEdit* clusterOrderGroupsEdit, *effortEdit, *maxDistEdit, *clusterOrderEffortEdit;
+		QLabel* undoLabel, *orderLabel, *reverseLabel, *clusterOrderLabel, *cutLabel, *pasteLabel, *effortLabel, *clusterOrderGroupsLabel, *maxDistLabel, *clusterOrderEffortLabel;
 		QCheckBox *randomStartCheckbox;
 	};
 }

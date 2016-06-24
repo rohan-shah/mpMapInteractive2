@@ -14,6 +14,13 @@
 #include <QProgressBar>
 namespace mpMapInteractive
 {
+	void intervalMode::addSeperator(QFormLayout* formLayout)
+	{
+		QFrame* seperator = new QFrame;
+		seperator->setFrameShape(QFrame::HLine);
+		seperator->setFrameShadow(QFrame::Sunken);
+		formLayout->addRow(seperator);
+	}
 	void intervalMode::constructFrame()
 	{
 		frame = new QFrame;
@@ -44,22 +51,12 @@ namespace mpMapInteractive
 		randomStartCheckbox = new QCheckBox("Random start");
 		formLayout->addRow(randomStartCheckbox);
 
-		{
-			QFrame* seperator = new QFrame;
-			seperator->setFrameShape(QFrame::HLine);
-			seperator->setFrameShadow(QFrame::Sunken);
-			formLayout->addRow(seperator);
-		}
+		addSeperator(formLayout);
 
 		reverseLabel = new QLabel(QString("Reverse (Ctrl + R)"));
 		formLayout->addRow(reverseLabel, new QLabel(""));
 
-		{
-			QFrame* seperator = new QFrame;
-			seperator->setFrameShape(QFrame::HLine);
-			seperator->setFrameShadow(QFrame::Sunken);
-			formLayout->addRow(seperator);
-		}
+		addSeperator(formLayout);
 
 		clusterOrderLabel = new QLabel(QString("Order using hclust (Ctrl + H)"));
 		formLayout->addRow(clusterOrderLabel);
@@ -69,12 +66,12 @@ namespace mpMapInteractive
 		clusterOrderGroupsLabel = new QLabel("Number of groups");
 		formLayout->addRow(clusterOrderGroupsLabel, clusterOrderGroupsEdit);
 
-		{
-			QFrame* seperator = new QFrame;
-			seperator->setFrameShape(QFrame::HLine);
-			seperator->setFrameShadow(QFrame::Sunken);
-			formLayout->addRow(seperator);
-		}
+		clusterOrderEffortEdit = new QLineEdit;
+		clusterOrderEffortEdit->setValidator(new QDoubleValidator());
+		clusterOrderEffortLabel = new QLabel("Effort multiplier:");
+		formLayout->addRow(clusterOrderEffortLabel, clusterOrderEffortEdit);
+
+		addSeperator(formLayout);
 
 		cutLabel = new QLabel(QString("Cut (Ctrl + X)"));
 		formLayout->addRow(cutLabel, new QLabel(""));
@@ -256,7 +253,7 @@ namespace mpMapInteractive
 					rawSymmetricMatrixToDense(&(denseMatrix(0, 0)), *imputedRawData, levels, nOriginalMarkers, currentPermutation, start, end+1, nonZero);
 					if(!nonZero) goto endComputation;
 					Rcpp::Environment fastClusterEnv("package:fastcluster");
-					Rcpp::Function asDist("as.dist"), hclust = fastClusterEnv["hclust"], cutree("cutree"), dotCall(".Call");
+					Rcpp::Function asDist("as.dist"), hclust = fastClusterEnv["hclust"], cutree("cutree");
 					//Convert the dense matrix to a dist object
 					Rcpp::RObject denseAsDist = asDist(denseMatrix);
 
@@ -265,7 +262,8 @@ namespace mpMapInteractive
 					//Get out groupings
 					Rcpp::IntegerVector groupings = cutree(clusterResult, nGroups);
 					//Use the groupings to convert the original raw symmetric matrix to a dissimilarity matrix
-					SEXP (*constructDissimilarityMatrixInternal)(unsigned char*, std::vector<double>&, int, SEXP, int, const std::vector<int>&) = (SEXP (*)(unsigned char*, std::vector<double>&, int, SEXP, int, const std::vector<int>&))R_GetCCallable("mpMap2", "constructDissimilarityMatrixInternal");
+					typedef SEXP (*constructDissimilarityMatrixInternalType)(unsigned char*, std::vector<double>&, int, SEXP, int, const std::vector<int>&);
+					constructDissimilarityMatrixInternalType constructDissimilarityMatrixInternal = (constructDissimilarityMatrixInternalType)R_GetCCallable("mpMap2", "constructDissimilarityMatrixInternal");
 					Rcpp::NumericVector dissimilarityMatrix = constructDissimilarityMatrixInternal(*imputedRawData, levels, data.getOriginalMarkerCount(), groupings, start, currentPermutation);
 					//Set the diagonal to be zero
 					for(int i = 0; i < nGroups; i++) dissimilarityMatrix(i, i) = 0;
@@ -281,7 +279,10 @@ namespace mpMapInteractive
 						}
 					}
 					//Use the dissimilarity matrix to run the ARSA code
-					Rcpp::IntegerVector orderingOfGroups = dotCall("arsa", nGroups, dissimilarityMatrixUpper, 0.5, 0.1, 1, Rcpp::Named("PACKAGE") = "mpMap2");
+					std::vector<int> orderingOfGroups;
+					typedef void (*arsaType)(R_xlen_t, double*, int, double, double, std::vector<int>&);
+					arsaType arsa = (arsaType)R_GetCCallable("mpMap2", "arsaExported");
+					arsa(nGroups, &(dissimilarityMatrixUpper(0)), 1, 0.1, 0.5, orderingOfGroups);
 					//Create an identity permutation
 					std::vector<int> totalPermutation;
 					totalPermutation.reserve(currentPermutation.size());
@@ -408,6 +409,8 @@ endComputation:
 		clusterOrderLabel->setEnabled(start != -1 && end != -1);
 		clusterOrderGroupsEdit->setEnabled(start != -1 && end != -1);
 		clusterOrderGroupsLabel->setEnabled(start != -1 && end != -1);
+		clusterOrderEffortEdit->setEnabled(start != -1 && end != -1);
+		clusterOrderEffortLabel->setEnabled(start != -1 && end != -1);
 
 		//Order related stuff
 		effortLabel->setEnabled(start != -1 && end != -1);
