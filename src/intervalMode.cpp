@@ -11,6 +11,7 @@
 #include <Rcpp.h>
 #include "order.h"
 #include <QCheckBox>
+#include <QProgressBar>
 namespace mpMapInteractive
 {
 	void intervalMode::constructFrame()
@@ -192,9 +193,14 @@ namespace mpMapInteractive
 					typedef void (*arsaRawExportedType)(std::vector<double>&, std::vector<int>&, long, Rbyte*, double, double, long, std::function<void(unsigned long,unsigned long)>, bool, int, double);
 					arsaRawExportedType arsaRawExported = (arsaRawExportedType)R_GetCCallable("mpMap2", "arsaRawExported");
 					std::vector<int> totalPermutation;
+					QProgressBar* progress = plotObject->addProgressBar();
+					progress->setMinimum(0);
+					progress->setMaximum(100);
 
-					std::function<void(unsigned long,unsigned long)> noProgress = [](unsigned long, unsigned long){};
+					std::function<void(unsigned long,unsigned long)> noProgress = [progress](unsigned long done, unsigned long totalSteps){progress->setValue(100.0 * (double)done / (double)totalSteps);};
 					arsaRawExported(levels, resultingPermutation, nSubMarkers, &copiedSubset.front(), 0.5, 0.1, 1, noProgress, randomStart, maxMove, effortMultiple);
+					plotObject->deleteProgressBar(progress);
+
 					int nMarkers = data.getMarkerCount();
 					totalPermutation.reserve(nMarkers);
 					for(int i = 0; i < nMarkers; i++) totalPermutation.push_back(i);
