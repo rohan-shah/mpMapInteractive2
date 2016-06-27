@@ -194,8 +194,8 @@ namespace mpMapInteractive
 					progress->setMinimum(0);
 					progress->setMaximum(100);
 
-					std::function<void(unsigned long,unsigned long)> noProgress = [progress](unsigned long done, unsigned long totalSteps){progress->setValue(100.0 * (double)done / (double)totalSteps);};
-					arsaRawExported(levels, resultingPermutation, nSubMarkers, &copiedSubset.front(), 0.5, 0.1, 1, noProgress, randomStart, maxMove, effortMultiple);
+					std::function<void(unsigned long,unsigned long)> progressFunction = [progress](unsigned long done, unsigned long totalSteps){progress->setValue(100.0 * (double)done / (double)totalSteps);};
+					arsaRawExported(levels, resultingPermutation, nSubMarkers, &copiedSubset.front(), 0.5, 0.1, 1, progressFunction, randomStart, maxMove, effortMultiple);
 					plotObject->deleteProgressBar(progress);
 
 					int nMarkers = data.getMarkerCount();
@@ -240,9 +240,15 @@ namespace mpMapInteractive
 				{
 					//Number of groups for hierarchical clustering
 					int nGroups = 0;
+					double effortMultiplier = 1;
 					try
 					{	
 						nGroups = std::stoi(clusterOrderGroupsEdit->text().toStdString());
+					}
+					catch(...){}
+					try
+					{
+						effortMultiplier = std::stod(clusterOrderEffortEdit->text().toStdString());
 					}
 					catch(...){}
 					if(nGroups == 0) goto endComputation;
@@ -280,9 +286,16 @@ namespace mpMapInteractive
 					}
 					//Use the dissimilarity matrix to run the ARSA code
 					std::vector<int> orderingOfGroups;
-					typedef void (*arsaType)(R_xlen_t, double*, int, double, double, std::vector<int>&);
+					typedef void (*arsaType)(R_xlen_t, double*, int, double, double, double, std::vector<int>&, std::function<void(unsigned long,unsigned long)> progressFunction);
 					arsaType arsa = (arsaType)R_GetCCallable("mpMap2", "arsaExported");
-					arsa(nGroups, &(dissimilarityMatrixUpper(0)), 1, 0.1, 0.5, orderingOfGroups);
+					QProgressBar* progress = plotObject->addProgressBar();
+					progress->setMinimum(0);
+					progress->setMaximum(100);
+
+					std::function<void(unsigned long,unsigned long)> progressFunction = [progress](unsigned long done, unsigned long totalSteps){progress->setValue(100.0 * (double)done / (double)totalSteps);};
+					arsa(nGroups, &(dissimilarityMatrixUpper(0)), 1, 0.1, 0.5, effortMultiplier, orderingOfGroups, progressFunction);
+					plotObject->deleteProgressBar(progress);
+			
 					//Create an identity permutation
 					std::vector<int> totalPermutation;
 					totalPermutation.reserve(currentPermutation.size());
