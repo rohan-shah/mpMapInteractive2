@@ -12,6 +12,7 @@
 #include "order.h"
 #include <QCheckBox>
 #include <QProgressBar>
+#include "arsaArgs.h"
 namespace mpMapInteractive
 {
 	void intervalMode::addSeperator(QFormLayout* formLayout)
@@ -187,15 +188,25 @@ namespace mpMapInteractive
 						}
 					}
 					std::vector<int> resultingPermutation;
-					typedef void (*arsaRawExportedType)(std::vector<double>&, std::vector<int>&, long, Rbyte*, double, double, long, std::function<void(unsigned long,unsigned long)>, bool, int, double);
-					arsaRawExportedType arsaRawExported = (arsaRawExportedType)R_GetCCallable("mpMap2", "arsaRawExported");
+					typedef void (*arsaRawExportedType)(arsaRawArgs& args);
+					arsaRawExportedType arsaRawExported = (arsaRawExportedType)R_GetCCallable("mpMap2", "arsaRaw");
 					std::vector<int> totalPermutation;
 					QProgressBar* progress = plotObject->addProgressBar();
 					progress->setMinimum(0);
 					progress->setMaximum(100);
 
 					std::function<void(unsigned long,unsigned long)> progressFunction = [progress](unsigned long done, unsigned long totalSteps){progress->setValue(100.0 * (double)done / (double)totalSteps);};
-					arsaRawExported(levels, resultingPermutation, nSubMarkers, &copiedSubset.front(), 0.5, 0.1, 1, progressFunction, randomStart, maxMove, effortMultiple);
+					arsaRawArgs arsaArgs(levels, resultingPermutation);
+					arsaArgs.n = nSubMarkers;
+					arsaArgs.rawDist = &copiedSubset.front();
+					arsaArgs.cool = 0.5;
+					arsaArgs.temperatureMin = 0.1;
+					arsaArgs.nReps = 1;
+					arsaArgs.progressFunction = progressFunction;
+					arsaArgs.randomStart = randomStart;
+					arsaArgs.maxMove = maxMove;
+					arsaArgs.effortMultiplier = effortMultiple;
+					arsaRawExported(arsaArgs);
 					plotObject->deleteProgressBar(progress);
 
 					int nMarkers = data.getMarkerCount();
@@ -286,14 +297,26 @@ namespace mpMapInteractive
 					}
 					//Use the dissimilarity matrix to run the ARSA code
 					std::vector<int> orderingOfGroups;
-					typedef void (*arsaType)(R_xlen_t, double*, int, double, double, double, std::vector<int>&, std::function<void(unsigned long,unsigned long)> progressFunction);
-					arsaType arsa = (arsaType)R_GetCCallable("mpMap2", "arsaExported");
+					typedef void (*arsaType)(arsaArgs& args);
+					arsaType arsa = (arsaType)R_GetCCallable("mpMap2", "arsa");
 					QProgressBar* progress = plotObject->addProgressBar();
 					progress->setMinimum(0);
 					progress->setMaximum(100);
 
 					std::function<void(unsigned long,unsigned long)> progressFunction = [progress](unsigned long done, unsigned long totalSteps){progress->setValue(100.0 * (double)done / (double)totalSteps);};
-					arsa(nGroups, &(dissimilarityMatrixUpper(0)), 1, 0.1, 0.5, effortMultiplier, orderingOfGroups, progressFunction);
+					arsaArgs args;
+					args.n = nGroups;
+					args.dist = &(dissimilarityMatrixUpper(0));
+					args.nReps = 1;
+					args.cool = 0.5;
+					args.temperatureMin = 0.1;
+					args.effortMultiplier = effortMultiplier;
+					args.randomStart = true;
+					args.maxMove = 0;
+					args.effortMultiplier = effortMultiplier;
+					args.progressFunction = progressFunction;
+					arsa(args);
+					orderingOfGroups.swap(args.bestPermutationAllReps);
 					plotObject->deleteProgressBar(progress);
 			
 					//Create an identity permutation

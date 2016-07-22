@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QProgressBar>
 #include <Rcpp.h>
+#include "arsaArgs.h"
 namespace mpMapInteractive
 {
 	void groupsMode::constructFrame()
@@ -257,8 +258,8 @@ namespace mpMapInteractive
 						totalResultingPermutation[i] = i;
 					}
 
-					typedef void (*arsaRawExportedType)(std::vector<double>&, std::vector<int>&, long, Rbyte*, double, double, long, std::function<void(unsigned long,unsigned long)>, bool, int, double);
-					arsaRawExportedType arsaRawExported = (arsaRawExportedType)R_GetCCallable("mpMap2", "arsaRawExported");
+					typedef void (*arsaRawExportedType)(arsaRawArgs&);
+					arsaRawExportedType arsaRawExported = (arsaRawExportedType)R_GetCCallable("mpMap2", "arsaRaw");
 					std::function<void(unsigned long,unsigned long)> noProgress = [](unsigned long, unsigned long){};
 					for(int groupCounter = 0; groupCounter < nGroups; groupCounter++)
 					{
@@ -282,7 +283,17 @@ namespace mpMapInteractive
 								}
 							}
 							std::vector<int> resultingPermutation;
-							arsaRawExported(levels, resultingPermutation, nSubMarkers, &copiedSubset.front(), 0.5, 0.1, 1, noProgress, true, -1, 1);
+							arsaRawArgs args(levels, resultingPermutation);
+							args.n = nSubMarkers;
+							args.rawDist = &copiedSubset.front();
+							args.cool = 0.5;
+							args.temperatureMin = 0.1;
+							args.nReps = 1;
+							args.progressFunction = noProgress;
+							args.randomStart = true;
+							args.maxMove = 0;
+							args.effortMultiplier = 1;
+							arsaRawExported(args);
 						
 							for(int i = 0; i < nSubMarkers; i++)
 							{
