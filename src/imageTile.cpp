@@ -103,6 +103,7 @@ namespace mpMapInteractive
 				if(rowIndices[counter] == previousPartitionIterator->back())
 				{
 					correspondingOldTiles.push_back(-1);
+					oldTilesCounter++;
 					newPartitionEntry++;
 					hasOldTile = true;
 					previousPartitionIterator++;
@@ -126,6 +127,10 @@ namespace mpMapInteractive
 				previousPartitionIterator++;
 			}
 			else newPartitionEntry->push_back(rowIndices[counter]);
+		}
+		if(correspondingOldTiles.size() != newTilesCount)
+		{
+			throw std::runtime_error("Internal error");
 		}
 		QVector<QRgb> colours;
 		constructColourTable(nColours, colours);
@@ -152,6 +157,10 @@ namespace mpMapInteractive
 				else
 				{
 					QGraphicsPixmapItem*& copiedItem = pixMapItems(correspondingOldTiles[newTileX], correspondingOldTiles[newTileY]);
+					if(copiedItem == NULL)
+					{
+						throw std::runtime_error("Internal error");
+					}
 					copiedItem->setPos(QPoint(cumulativeX, cumulativeY));
 					newPixMapItems(newTileX, newTileY) = copiedItem;
 					copiedItem = NULL;
@@ -185,7 +194,7 @@ namespace mpMapInteractive
 			}
 		}
 	}
-	void imageTile::regenerate()
+	void imageTile::regenerate() const
 	{
 		for(std::vector<QGraphicsPixmapItem*>::iterator i = pixMapItems.getData().begin(); i != pixMapItems.getData().end(); i++)
 		{
@@ -308,7 +317,9 @@ namespace mpMapInteractive
 
 		int subTileColumns = columnPartition.size();
 		int subTileRows = rowPartition.size();
+		bool shouldRegenerate = false;
 
+	removeMarkerColumn:
 		std::vector<int>::iterator findColumn = std::find(columnIndices.begin(), columnIndices.end(), markerIndex);
 		if(findColumn != columnIndices.end())
 		{
@@ -333,8 +344,8 @@ namespace mpMapInteractive
 				//delete the corresponding bits of the image
 				for(int subTileRow = 0; subTileRow < subTileRows; subTileRow++)
 				{
-					delete pixMapItems(subTileRow, columnIndex);
-					pixMapItems(subTileRow, columnIndex) = NULL;
+					shouldRegenerate = true;
+					goto removeMarkerRow;
 				}
 			}
 			//If not we need to regenerate those tiles that we're deleting from
@@ -345,8 +356,8 @@ namespace mpMapInteractive
 					std::vector<int>& rowPartitionEntry = rowPartition[subTileRow];
 					if(rowPartitionEntry.size() == 0 || columnPartitionEntry.size() == 0)
 					{
-						delete pixMapItems(subTileRow, columnIndex);
-						pixMapItems(subTileRow, columnIndex) = NULL;
+						shouldRegenerate = true;
+						goto removeMarkerRow;
 					}
 					else
 					{
@@ -379,6 +390,7 @@ namespace mpMapInteractive
 				}
 			}
 		}
+	removeMarkerRow:
 		std::vector<int>::iterator findRow = std::find(rowIndices.begin(), rowIndices.end(), markerIndex);
 		if(findRow != rowIndices.end())
 		{
@@ -403,8 +415,8 @@ namespace mpMapInteractive
 				//delete the corresponding bits of the image
 				for(int subTileColumn = 0; subTileColumn < subTileColumns; subTileColumn++)
 				{
-					delete pixMapItems(rowIndex, subTileColumn);
-					pixMapItems(rowIndex, subTileColumn) = NULL;
+					shouldRegenerate = true;
+					goto checkRegenerate;
 				}
 			}
 			//If not we need to regenerate those tiles that we're deleting from
@@ -415,8 +427,8 @@ namespace mpMapInteractive
 					std::vector<int>& columnPartitionEntry = columnPartition[subTileColumn];
 					if(columnPartitionEntry.size() == 0 || rowPartitionEntry.size() == 0)
 					{
-						delete pixMapItems(rowIndex, subTileColumn);
-						pixMapItems(rowIndex, subTileColumn) = NULL;
+						shouldRegenerate = true;
+						goto checkRegenerate;
 					}
 					else
 					{
@@ -449,6 +461,8 @@ namespace mpMapInteractive
 				}
 			}
 		}
+	checkRegenerate:
+		if(shouldRegenerate) regenerate();
 	}
 	void imageTile::shiftMarkers(int cutStartIndex, int cutEndIndex, int startIndex) const
 	{

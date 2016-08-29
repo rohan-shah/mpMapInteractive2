@@ -74,7 +74,7 @@ namespace mpMapInteractive
 		void shiftMarkers(int cutStartIndex, int cutEndIndex, int startIndex) const;
 	private:
 		static const int subTileSize = 500;
-		void regenerate();
+		void regenerate() const;
 		void generateSubTile(int columnStart, int columnEnd, int rowStart, int rowEnd, QImage& image) const;
 		void generateSubTile(const std::vector<int>& columnIndices, const std::vector<int>& rowIndices, QImage& image) const;
 		//The input to this function is a set of indices into rowIndices / columnIndices (They're required to be identical for this function)

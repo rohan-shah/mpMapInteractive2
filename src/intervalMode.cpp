@@ -156,7 +156,7 @@ namespace mpMapInteractive
 					end = newEnd;
 				}
 				double effortMultiple = 1;
-				int maxMove = -1;
+				int maxMove = 0;
 				try
 				{
 					effortMultiple = std::stod(effortEdit->text().toStdString());
@@ -168,7 +168,7 @@ namespace mpMapInteractive
 					maxMove = std::stod(maxDistEdit->text().toStdString());
 				}
 				catch(...){}
-				if(maxMove <= 0) maxMove = -1;
+				if(maxMove <= 0) maxMove = 0;
 
 				bool randomStart = randomStartCheckbox->isChecked();
 
