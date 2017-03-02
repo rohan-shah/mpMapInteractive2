@@ -40,6 +40,7 @@ namespace mpMapInteractive
 		delete auxillaryLabel;
 		delete statusLabel;
 		delete statusBar;
+		delete cancelShortcut;
 	}
 	void qtPlot::addStatusBar()
 	{
@@ -188,6 +189,8 @@ namespace mpMapInteractive
 		currentModeObject->enterMode();
 
 		graphicsView->setFocus();
+	
+		cancelShortcut = new QShortcut(QKeySequence("Ctrl+c"), this);
 	}
 	void qtPlot::graphicsLeaveEvent(QEvent*)
 	{
@@ -467,6 +470,18 @@ delete_tile:
 	QGraphicsView& qtPlot::getGraphicsView()
 	{
 		return *graphicsView;
+	}
+	QPushButton* qtPlot::addCancelButton()
+	{
+		QPushButton* cancelButton = new QPushButton("Cancel");
+		statusBar->addWidget(cancelButton);
+		QObject::connect(cancelShortcut, SIGNAL(activated()), cancelButton, SLOT(click()));
+		return cancelButton;
+	}
+	void qtPlot::deleteCancelButton(QPushButton* button)
+	{
+		statusBar->removeWidget(button);
+		delete button;
 	}
 	QProgressBar* qtPlot::addProgressBar()
 	{

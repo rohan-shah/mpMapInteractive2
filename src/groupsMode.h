@@ -13,6 +13,7 @@ namespace mpMapInteractive
 	public slots:
 		void group1ReturnPressed();
 		void group2ReturnPressed();
+		void cancel();
 	public:
 		groupsMode(qtPlot* plotObject, qtPlotData& data, unsigned char** imputedRawData, unsigned char* rawImageData, plotModeObject::imputeFunctionType imputeFunction, std::vector<double>& levels)
 			: plotModeObject(plotObject, data, imputedRawData, rawImageData, imputeFunction, levels), horizontalGroup(-1), verticalGroup(-1), horizontalHighlight(NULL), verticalHighlight(NULL)
@@ -38,6 +39,7 @@ namespace mpMapInteractive
 		int horizontalGroup;
 		int verticalGroup;
 		QGraphicsRectItem* horizontalHighlight, *verticalHighlight;
+		bool shouldCancel;
 	};
 }
 #endif

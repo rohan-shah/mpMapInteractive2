@@ -215,6 +215,7 @@ namespace mpMapInteractive
 		{
 			if(plotObject->attemptBeginComputation())
 			{
+				shouldCancel = false;
 				QMessageBox confirm;
 				confirm.setText("This could take a while. Continue?");
 				confirm.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
@@ -248,6 +249,8 @@ namespace mpMapInteractive
 					}
 
 					QProgressBar* progress = plotObject->addProgressBar();
+					QPushButton* cancelButton = plotObject->addCancelButton();
+					QObject::connect(cancelButton, SIGNAL(clicked(bool)), this, SLOT(cancel()));
 					progress->setMinimum(0);
 					progress->setMaximum((int)(nGroups - exceptionsList.size()));
 					
@@ -261,9 +264,10 @@ namespace mpMapInteractive
 
 					typedef void (*arsaRawExportedType)(arsaRawArgs&);
 					arsaRawExportedType arsaRawExported = (arsaRawExportedType)R_GetCCallable("mpMap2", "arsaRaw");
-					std::function<void(unsigned long,unsigned long)> noProgress = [](unsigned long, unsigned long)
+					std::function<bool(unsigned long,unsigned long)> noProgress = [this](unsigned long, unsigned long)
 					{
 						QCoreApplication::processEvents();
+						return this->shouldCancel;
 					};
 					for(int groupCounter = 0; groupCounter < nGroups; groupCounter++)
 					{
@@ -298,6 +302,7 @@ namespace mpMapInteractive
 							args.maxMove = 0;
 							args.effortMultiplier = 1;
 							arsaRawExported(args);
+							if(shouldCancel) break;
 						
 							for(int i = 0; i < nSubMarkers; i++)
 							{
@@ -309,6 +314,7 @@ namespace mpMapInteractive
 					data.applyPermutation(totalResultingPermutation, data.getCurrentGroups());
 					plotObject->dataChanged();
 					plotObject->deleteProgressBar(progress);
+					plotObject->deleteCancelButton(cancelButton);
 				}
 				plotObject->endComputation();
 			}
@@ -340,6 +346,10 @@ namespace mpMapInteractive
 		horizontalGroup = -1;
 		verticalGroup = -1;
 		deleteHighlighting();
+	}
+	void groupsMode::cancel()
+	{
+		shouldCancel = true;
 	}
 	void groupsMode::group1ReturnPressed()
 	{

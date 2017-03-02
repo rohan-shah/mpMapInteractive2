@@ -2,6 +2,7 @@
 #include "ZoomGraphicsView.h"
 #include <QLabel>
 #include <QGraphicsScene>
+#include <QPushButton>
 #include <QGraphicsPixmapItem>
 #include <QLineEdit>
 #include <vector>
@@ -11,6 +12,7 @@
 #include "imageTile.h"
 #include <functional>
 #include "qtPlotData.h"
+#include <QShortcut>
 class QProgressBar;
 namespace mpMapInteractive
 {
@@ -36,6 +38,8 @@ namespace mpMapInteractive
 		void endComputation();
 		qtPlotData& getData();
 		void dataChanged();
+		QPushButton* addCancelButton();
+		void deleteCancelButton(QPushButton*);
 		QProgressBar* addProgressBar();
 		void deleteProgressBar(QProgressBar*);
 		std::set<imageTile, imageTileComparer> imageTiles;
@@ -95,5 +99,6 @@ namespace mpMapInteractive
 		QSharedPointer<groupsMode> groupsModeObject;
 		QSharedPointer<intervalMode> intervalModeObject;
 		QSharedPointer<singleMode> singleModeObject;
+		QShortcut* cancelShortcut;
 	};
 }
