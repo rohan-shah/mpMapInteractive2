@@ -13,5 +13,6 @@ Collate:
    'Rcpp_exceptions.R'
 Depends:
     Rcpp,
-    mpMap2
+    mpMap2,
+    fastcluster
 LinkingTo: Rcpp

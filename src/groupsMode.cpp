@@ -11,6 +11,7 @@
 #include <QProgressBar>
 #include <Rcpp.h>
 #include "arsaArgs.h"
+#include <QCoreApplication>
 namespace mpMapInteractive
 {
 	void groupsMode::constructFrame()
@@ -260,7 +261,10 @@ namespace mpMapInteractive
 
 					typedef void (*arsaRawExportedType)(arsaRawArgs&);
 					arsaRawExportedType arsaRawExported = (arsaRawExportedType)R_GetCCallable("mpMap2", "arsaRaw");
-					std::function<void(unsigned long,unsigned long)> noProgress = [](unsigned long, unsigned long){};
+					std::function<void(unsigned long,unsigned long)> noProgress = [](unsigned long, unsigned long)
+					{
+						QCoreApplication::processEvents();
+					};
 					for(int groupCounter = 0; groupCounter < nGroups; groupCounter++)
 					{
 						if(std::find(exceptionsList.begin(), exceptionsList.end(), uniqueGroups[groupCounter]) != exceptionsList.end()) continue;
