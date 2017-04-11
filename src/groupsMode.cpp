@@ -239,21 +239,28 @@ namespace mpMapInteractive
 						pos += intListRegex.matchedLength();
 					}
 
+					QProgressBar* progress = plotObject->addProgressBar();
+					progress->setMinimum(0);
+					progress->setMaximum((int)(nGroups - exceptionsList.size()));
+					progress->setValue(0);
 					//do the imputation again - If groups have been joined then we could end up with NAs in the recombination fraction matrix. Remember that the imputation only removes NAs between markers IN THE SAME GROUP, using the group structure as currently set. We need to assign a group to EVERY marker that was ORIGINALLY here. So everything that has been deleted, and therefore doesn't have a group, goes in (max(group) + 1). 
 					int nOriginalMarkers = data.getOriginalMarkerCount();
 					if(*imputedRawData == NULL) *imputedRawData = new unsigned char[(nOriginalMarkers * (nOriginalMarkers + 1))/2];
 					memcpy(*imputedRawData, rawImageData, sizeof(unsigned char)*(nOriginalMarkers * (nOriginalMarkers + 1))/2);
+					int imputedCounter = 0;
 					for(std::vector<int>::iterator group = uniqueGroups.begin(); group != uniqueGroups.end(); group++)
 					{
-						if(std::find(exceptionsList.begin(), exceptionsList.end(), *group) == exceptionsList.end()) doImputation(*group);
+						if(std::find(exceptionsList.begin(), exceptionsList.end(), *group) == exceptionsList.end()) 
+						{
+							doImputation(*group);
+							progress->setValue(imputedCounter + 1);
+							imputedCounter++;
+						}
 					}
 
-					QProgressBar* progress = plotObject->addProgressBar();
 					QPushButton* cancelButton = plotObject->addCancelButton();
 					QObject::connect(cancelButton, SIGNAL(clicked(bool)), this, SLOT(cancel()));
-					progress->setMinimum(0);
-					progress->setMaximum((int)(nGroups - exceptionsList.size()));
-					
+					progress->setValue(0);
 					int nMarkers = data.getOriginalMarkerCount();
 					std::vector<int> totalResultingPermutation;
 					totalResultingPermutation.resize(nMarkers);
@@ -269,6 +276,7 @@ namespace mpMapInteractive
 						QCoreApplication::processEvents();
 						return this->shouldCancel;
 					};
+					int orderedCounter = 0;
 					for(int groupCounter = 0; groupCounter < nGroups; groupCounter++)
 					{
 						if(std::find(exceptionsList.begin(), exceptionsList.end(), uniqueGroups[groupCounter]) != exceptionsList.end()) continue;
@@ -309,7 +317,8 @@ namespace mpMapInteractive
 								totalResultingPermutation[i + startOfGroup] = startOfGroup + resultingPermutation[i];
 							}
 						}
-						progress->setValue(groupCounter+1);
+						progress->setValue(orderedCounter + 1);
+						orderedCounter++;
 					}
 					data.applyPermutation(totalResultingPermutation, data.getCurrentGroups());
 					plotObject->dataChanged();
