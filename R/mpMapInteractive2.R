@@ -49,5 +49,6 @@ mpMapInteractive2 <- function(mpcross, auxillaryNumeric = NULL)
 	names(groups) <- markerNames
 	withoutLG <- as(mpcross, "mpcrossRF")
 	subsetted <- subset(withoutLG, markers = markerNames)
-	return(new("mpcrossLG", subsetted, rf = subsetted@rf, lg = new("lg", groups = groups, allGroups = unique(groups))))
+	newObject <- new("mpcrossLG", subsetted, rf = subsetted@rf, lg = new("lg", groups = groups, allGroups = unique(groups)))
+	return(list(object = newObject, permutations = result[[3]], groups = result[[4]]))
 }

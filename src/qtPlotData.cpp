@@ -95,4 +95,12 @@ namespace mpMapInteractive
 		cumulativePermutations.push_back(newCumulativePermutation);
 		groups.push_back(newGroups);
 	}
+	const std::vector<std::vector<int> >& qtPlotData::getCumulativePermutations() const
+	{
+		return cumulativePermutations;
+	}
+	const std::vector<std::vector<int> >& qtPlotData::getCumulativeGroups() const
+	{
+		return groups;
+	}
 }

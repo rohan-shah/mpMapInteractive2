@@ -18,6 +18,8 @@ namespace mpMapInteractive
 		bool singleGroup() const;
 		int getMarkerCount() const;
 		int getOriginalMarkerCount() const;
+		const std::vector<std::vector<int> >& getCumulativePermutations() const;
+		const std::vector<std::vector<int> >& getCumulativeGroups() const;
 	private:
 		qtPlotData(){};
 		

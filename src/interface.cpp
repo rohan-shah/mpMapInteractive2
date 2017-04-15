@@ -230,6 +230,8 @@ extern "C"
 		const mpMapInteractive::qtPlotData& outputData = plot.getData();
 		std::vector<int> outputGroups = outputData.getCurrentGroups();
 		std::vector<std::string> outputMarkerNames = outputData.getCurrentMarkerNames();
+		const std::vector<std::vector<int> >& cumulativePermutations = outputData.getCumulativePermutations();
+		const std::vector<std::vector<int> >& cumulativeGroups = outputData.getCumulativeGroups();
 
 		delete[] argv[0];
 		delete[] argv[1];
@@ -237,7 +239,14 @@ extern "C"
 
 		Rcpp::CharacterVector convertedOutputMarkerNames = Rcpp::wrap(outputMarkerNames);
 		Rcpp::IntegerVector convertedOutputGroups = Rcpp::wrap(outputGroups);
-		Rcpp::List retVal = Rcpp::List::create(convertedOutputMarkerNames, convertedOutputGroups);
+
+		Rcpp::List convertedCumulativePermutations(cumulativePermutations.size());
+		for(int i = 0 ; i < cumulativePermutations.size(); i++) convertedCumulativePermutations(i) = Rcpp::wrap(cumulativePermutations[i]);
+
+		Rcpp::List convertedCumulativeGroups(cumulativeGroups.size());
+		for(int i = 0 ; i < cumulativeGroups.size(); i++) convertedCumulativeGroups(i) = Rcpp::wrap(cumulativeGroups[i]);
+
+		Rcpp::List retVal = Rcpp::List::create(convertedOutputMarkerNames, convertedOutputGroups, convertedCumulativePermutations, convertedCumulativeGroups);
 		return retVal;
 	END_RCPP
 	}
