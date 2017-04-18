@@ -22,6 +22,7 @@
 #include "intervalMode.h"
 #include "groupsMode.h"
 #include <QGraphicsItemGroup>
+#include <QSizePolicy>
 namespace mpMapInteractive
 {
 	qtPlot::~qtPlot()
@@ -37,17 +38,78 @@ namespace mpMapInteractive
 
 		delete graphicsView;
 		delete graphicsScene;
-		delete statusLabel;
 		delete statusBar;
 		delete cancelShortcut;
 	}
 	void qtPlot::addStatusBar()
 	{
 		statusBar = new QStatusBar();
-		statusLabel = new QLabel();
-		statusLabel->setText("");
-		statusBar->addPermanentWidget(statusLabel);
+		
+		QHBoxLayout* layout = new QHBoxLayout();
 
+		//Marker section
+
+		markerXLabel = new QLabel("");
+		markerYLabel = new QLabel("");
+		
+		markerXLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+		markerYLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+		markerXLabel->setFixedWidth(200);
+		markerYLabel->setFixedWidth(200);
+
+		markerXLabel->setAlignment(Qt::AlignRight);
+		markerYLabel->setAlignment(Qt::AlignRight);
+		
+		layout->insertWidget(-1, new QLabel("Col marker"), 0, Qt::AlignRight);
+		layout->insertWidget(-1, markerXLabel, 0, Qt::AlignRight);
+		layout->insertWidget(-1, new QLabel("Row marker"), 0, Qt::AlignRight);
+		layout->insertWidget(-1, markerYLabel, 0, Qt::AlignRight);
+
+		layout->addSpacing(50);
+		//Group section
+
+		groupXLabel = new QLabel("");
+		groupYLabel = new QLabel("");
+		
+		groupXLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+		groupYLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+		groupXLabel->setFixedWidth(35);
+		groupYLabel->setFixedWidth(35);
+
+		groupXLabel->setAlignment(Qt::AlignRight);
+		groupYLabel->setAlignment(Qt::AlignRight);
+		
+		layout->insertWidget(-1, new QLabel("Col group"), 0, Qt::AlignRight);
+		layout->insertWidget(-1, groupXLabel, 0, Qt::AlignRight);
+		layout->insertWidget(-1, new QLabel("Row group"), 0, Qt::AlignRight);
+		layout->insertWidget(-1, groupYLabel, 0, Qt::AlignRight);
+
+		layout->addSpacing(50);
+
+		//Position section
+
+		positionXLabel = new QLabel("");
+		positionYLabel = new QLabel("");
+		
+		positionXLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+		positionYLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+		positionXLabel->setFixedWidth(50);
+		positionYLabel->setFixedWidth(50);
+
+		positionXLabel->setAlignment(Qt::AlignRight);
+		positionYLabel->setAlignment(Qt::AlignRight);
+		
+		layout->insertWidget(-1, new QLabel("Column"), 0, Qt::AlignRight);
+		layout->insertWidget(-1, positionXLabel, 0, Qt::AlignRight);
+		layout->insertWidget(-1, new QLabel("Row"), 0, Qt::AlignRight);
+		layout->insertWidget(-1, positionYLabel, 0, Qt::AlignRight);
+		
+		QFrame* displayFrame = new QFrame();
+		displayFrame->setLayout(layout);
+		statusBar->addPermanentWidget(displayFrame);
 		setStatusBar(statusBar);
 	}
 	void qtPlot::initialiseImageData(int nMarkers)
@@ -188,7 +250,12 @@ namespace mpMapInteractive
 	}
 	void qtPlot::graphicsLeaveEvent(QEvent*)
 	{
-		statusLabel->setText(QString(""));
+		positionXLabel->setText(QString(""));
+		positionYLabel->setText(QString(""));
+		groupXLabel->setText(QString(""));
+		groupYLabel->setText(QString(""));
+		markerXLabel->setText(QString(""));
+		markerYLabel->setText(QString(""));
 	}
 	void qtPlot::signalMouseMove()
 	{
@@ -226,7 +293,13 @@ namespace mpMapInteractive
 		}
 		if(event->type() == QEvent::Leave)
 		{
-			statusLabel->setText(QString(""));
+			positionXLabel->setText(QString(""));
+			positionYLabel->setText(QString(""));
+			groupXLabel->setText(QString(""));
+			groupYLabel->setText(QString(""));
+			markerXLabel->setText(QString(""));
+			markerYLabel->setText(QString(""));
+
 			currentModeObject->leaveFocus();
 			return true;
 		}
@@ -237,7 +310,6 @@ namespace mpMapInteractive
 		const double threshold = 1e-5;
 		qreal x_ = scenePos.x(), y_ = scenePos.y();
 		int x = (int)(x_  + 0), y = (int)(y_ + 0);
-		std::stringstream ss;
 		int nMarkers = data->getMarkerCount();
 		if(0 <= x && x < nMarkers && 0 <= y && y < nMarkers)
 		{
@@ -246,12 +318,22 @@ namespace mpMapInteractive
 			int yMarker = currentPermutation[y];
 			const std::vector<std::string> currentMarkerNames = data->getCurrentMarkerNames();
 			const std::vector<int> currentGroups = data->getCurrentGroups();
-			ss << "Markers (column = " << currentMarkerNames[x] << ", row = " << currentMarkerNames[y] << ")\t\t\t";
-			ss << "Groups (column = " << currentGroups[x] << ", row = " << currentGroups[y] << ")\t\t\t";
-			
+
+			markerXLabel->setText(currentMarkerNames[x].c_str());
+			markerYLabel->setText(currentMarkerNames[y].c_str());
+
+			QString xGroupAsString; xGroupAsString.setNum(currentGroups[x]);
+			groupXLabel->setText(xGroupAsString);
+
+			QString yGroupAsString; yGroupAsString.setNum(currentGroups[y]);
+			groupYLabel->setText(yGroupAsString);
 		}
-		ss << "position (" << x << ", " << y << ")";
-		statusLabel->setText(QString(ss.str().c_str()));
+		QString xAsString; xAsString.setNum(x);
+		positionXLabel->setText(xAsString);
+
+		QString yAsString; yAsString.setNum(y);
+		positionYLabel->setText(yAsString);
+
 		currentModeObject->mouseMove(x, y);
 	}
 	void qtPlot::dataChanged()

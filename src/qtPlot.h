@@ -82,6 +82,9 @@ namespace mpMapInteractive
 		std::vector<uchar> originalDataToChar;
 		QStatusBar* statusBar;
 
+		QLabel* positionXLabel, *positionYLabel;
+		QLabel* groupXLabel, *groupYLabel;
+		QLabel* markerXLabel, *markerYLabel;
 		//we need a critical section around changes to the image state (basically anything that calls applyPermutation), because: The Ordering code calls into R, which will periodically
 		//break out and process events, which will keep the window responsive. Which means that (for example) if you choose to order a large chunk of the image, and hit Ctrl + O again while it's doing this, it will 
 		//call the ordering code again internally (from inside the first ordering computation). This is bade. 
