@@ -37,7 +37,6 @@ namespace mpMapInteractive
 
 		delete graphicsView;
 		delete graphicsScene;
-		delete auxillaryLabel;
 		delete statusLabel;
 		delete statusBar;
 		delete cancelShortcut;
@@ -48,11 +47,6 @@ namespace mpMapInteractive
 		statusLabel = new QLabel();
 		statusLabel->setText("");
 		statusBar->addPermanentWidget(statusLabel);
-
-		auxillaryLabel = new QLabel();
-		auxillaryLabel->setText("");
-		statusBar->addWidget(auxillaryLabel);
-		auxillaryLabel->setTextFormat(Qt::RichText);
 
 		setStatusBar(statusBar);
 	}
@@ -136,8 +130,8 @@ namespace mpMapInteractive
 		bounding.setHeight(nMarkers + nMarkers/10.0);
 		graphicsView->setSceneRect(bounding);
 	}
-	qtPlot::qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames, double* auxData, int auxRows, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction)
-		:currentMode(Groups), data(new qtPlotData(originalGroups, originalMarkerNames)), nOriginalMarkers((int)originalGroups.size()), rawImageData(rawImageData), imputedRawImageData(imputedRawImageData), levels(levels), isFullScreen(false), auxData(auxData), auxRows(auxRows), computationMutex(QMutex::NonRecursive), transparency(NULL), imputeFunction(imputeFunction)
+	qtPlot::qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction)
+		:currentMode(Groups), data(new qtPlotData(originalGroups, originalMarkerNames)), nOriginalMarkers((int)originalGroups.size()), rawImageData(rawImageData), imputedRawImageData(imputedRawImageData), levels(levels), isFullScreen(false), computationMutex(QMutex::NonRecursive), transparency(NULL), imputeFunction(imputeFunction)
 	{
 		int nMarkers = (int)originalGroups.size();
 		initialiseImageData(nMarkers);
@@ -195,7 +189,6 @@ namespace mpMapInteractive
 	void qtPlot::graphicsLeaveEvent(QEvent*)
 	{
 		statusLabel->setText(QString(""));
-		auxillaryLabel->setText(QString(""));
 	}
 	void qtPlot::signalMouseMove()
 	{
@@ -251,44 +244,6 @@ namespace mpMapInteractive
 			const std::vector<int>& currentPermutation = data->getCurrentPermutation();
 			int xMarker = currentPermutation[x];
 			int yMarker = currentPermutation[y];
-			if(auxData != NULL)
-			{
-				std::stringstream aux_ss;
-				aux_ss << "Column = (";
-				for(int i = 0; i < auxRows-1; i++)
-				{
-					double value = (auxData + xMarker * auxRows)[i];
-					if(value < 1e-5)
-					{
-						aux_ss << "<b>" << value << "</b>, ";
-					}
-					else aux_ss << value << ", ";
-				}
-				double value = (auxData + xMarker * auxRows)[auxRows-1];
-				if(value < 1e-5)
-				{
-					aux_ss << "<b>" << value << "</b>";
-				}
-				else aux_ss << value;
-				aux_ss << "), Row = (";
-				for(int i = 0; i < auxRows-1; i++)
-				{
-					double value = (auxData + yMarker * auxRows)[i];
-					if(value < threshold)
-					{
-						aux_ss << "<b>" << value << "</b>, ";
-					}
-					else aux_ss << value << ", ";
-				}
-				value = (auxData + yMarker * auxRows)[auxRows-1];
-				if(value < 1e-5)
-				{
-					aux_ss << "<b>" << value << "</b>";
-				}
-				else aux_ss << value;
-				aux_ss << ")";
-				auxillaryLabel->setText(QString(aux_ss.str().c_str()));
-			}
 			const std::vector<std::string> currentMarkerNames = data->getCurrentMarkerNames();
 			const std::vector<int> currentGroups = data->getCurrentGroups();
 			ss << "Markers (column = " << currentMarkerNames[x] << ", row = " << currentMarkerNames[y] << ")\t\t\t";

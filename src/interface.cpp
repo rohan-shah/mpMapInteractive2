@@ -3,7 +3,7 @@
 #include "qtPlot.h"
 extern "C"
 {
-	RcppExport SEXP qtPlotMpMap2(SEXP mpcross__, SEXP auxillaryNumeric__)
+	RcppExport SEXP qtPlotMpMap2(SEXP mpcross__)
 	{
 	BEGIN_RCPP
 
@@ -157,41 +157,6 @@ extern "C"
 			throw std::runtime_error("Input mpcross@rf must be present if there is more than one group");
 		}
 
-		//check the auxillary numeric matrix
-		double* auxillaryPointer = NULL;
-		int auxRows = 0;
-		Rcpp::RObject auxillaryNumeric_(auxillaryNumeric__);
-		if(auxillaryNumeric_.sexp_type() != NILSXP)
-		{
-			Rcpp::NumericMatrix auxillaryNumeric;
-			try
-			{
-				auxillaryNumeric = Rcpp::as<Rcpp::NumericMatrix>(auxillaryNumeric_);
-			}
-			catch(...)
-			{
-				throw Rcpp::not_compatible("Input auxillaryNumeric must be a numeric matrix");
-			}
-			Rcpp::IntegerVector auxDim;
-			try
-			{
-				auxDim = Rcpp::as<Rcpp::IntegerVector>(auxillaryNumeric.attr("dim"));
-			}
-			catch(...)
-			{
-				throw Rcpp::not_compatible("Input auxillaryNumeric had dimensions of wrong type");
-			}
-			if(auxDim.length() != 2)
-			{
-				throw Rcpp::not_compatible("Input auxillaryNumeric had dimensions of wrong length");
-			}
-			if(auxDim[1] != markerNames.size())
-			{
-				throw Rcpp::not_compatible("Input auxillaryNumeric had wrong number of columns");
-			}
-			auxRows = auxillaryNumeric.nrow();
-			auxillaryPointer = &(auxillaryNumeric(0,0));
-		}
 		//Check that every group is represented as a contiguous chunk of markers.
 		for(std::vector<int>::iterator currentGroup = allGroups.begin(); currentGroup != allGroups.end(); currentGroup++)
 		{
@@ -223,7 +188,7 @@ extern "C"
 		if (imputeFunctionUntyped == NULL) throw std::runtime_error("Unable to access imputation function of package mpMap2");
 		mpMapInteractive::qtPlot::imputeFunctionType imputeFunction = (bool (*)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction))imputeFunctionUntyped;
 
-		mpMapInteractive::qtPlot plot(&(thetaData(0)), thetaLevelsVector, groups, markerNames, auxillaryPointer, auxRows, imputedRawImageData, imputeFunction);
+		mpMapInteractive::qtPlot plot(&(thetaData(0)), thetaLevelsVector, groups, markerNames, imputedRawImageData, imputeFunction);
 		plot.show();
 		app.exec();
 

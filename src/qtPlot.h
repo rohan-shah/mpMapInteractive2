@@ -30,7 +30,7 @@ namespace mpMapInteractive
 	public:
 		typedef bool (*imputeFunctionType)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction);
 		~qtPlot();
-		qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& groups, const std::vector<std::string>& markerNames, double* auxData, int auxRows, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction);
+		qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& groups, const std::vector<std::string>& markerNames, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction);
 		QGraphicsView& getGraphicsView();
 		void signalMouseMove();
 		QGraphicsScene& getGraphicsScene();
@@ -81,11 +81,6 @@ namespace mpMapInteractive
 		QGraphicsScene* graphicsScene;
 		std::vector<uchar> originalDataToChar;
 		QStatusBar* statusBar;
-
-		//related to auxillary numeric data to be shown in status bar
-		double* auxData;
-		int auxRows;
-		QLabel* auxillaryLabel;
 
 		//we need a critical section around changes to the image state (basically anything that calls applyPermutation), because: The Ordering code calls into R, which will periodically
 		//break out and process events, which will keep the window responsive. Which means that (for example) if you choose to order a large chunk of the image, and hit Ctrl + O again while it's doing this, it will 
