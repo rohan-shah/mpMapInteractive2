@@ -195,7 +195,10 @@ namespace mpMapInteractive
 					progress->setMinimum(0);
 					progress->setMaximum(100);
 
-					std::function<void(unsigned long,unsigned long)> progressFunction = [progress](unsigned long done, unsigned long totalSteps){progress->setValue(100.0 * (double)done / (double)totalSteps);};
+					std::function<bool(unsigned long,unsigned long)> progressFunction = [progress](unsigned long done, unsigned long totalSteps){
+						progress->setValue(100.0 * (double)done / (double)totalSteps);
+						return false;
+					};
 					arsaRawArgs arsaArgs(levels, resultingPermutation);
 					arsaArgs.n = nSubMarkers;
 					arsaArgs.rawDist = &copiedSubset.front();
