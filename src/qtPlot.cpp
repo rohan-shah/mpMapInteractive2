@@ -23,6 +23,7 @@
 #include "groupsMode.h"
 #include <QGraphicsItemGroup>
 #include <QSizePolicy>
+#include <QSplitter>
 namespace mpMapInteractive
 {
 	qtPlot::~qtPlot()
@@ -197,7 +198,6 @@ namespace mpMapInteractive
 	{
 		int nMarkers = (int)originalGroups.size();
 		initialiseImageData(nMarkers);
-		QHBoxLayout* topLayout = new QHBoxLayout();
 		graphicsScene = new QGraphicsScene();	
 		graphicsScene->setItemIndexMethod(QGraphicsScene::NoIndex);
 		
@@ -230,17 +230,13 @@ namespace mpMapInteractive
 		intervalModeObject->frame->hide();
 		singleModeObject->frame->hide();
 
-		//add form layout to top level layout (same level as the graphics view)
-		topLayout->addWidget(sidebarWidget, 0);
-		topLayout->addWidget(graphicsView);
-		topLayout->setStretchFactor(graphicsView, 1);
+		//Add sidebar and graphics view, with a QSplitter
+		QSplitter* splitter = new QSplitter();
+		splitter->addWidget(sidebarWidget);
+		splitter->addWidget(graphicsView);
 
 		//no margins needed
-		QWidget* topLayoutWidget = new QWidget;
-		topLayout->setContentsMargins(0,0,0,0);
-		topLayoutWidget->setContentsMargins(0,0,0,0);
-		topLayoutWidget->setLayout(topLayout);
-		setCentralWidget(topLayoutWidget);
+		setCentralWidget(splitter);
 
 		currentModeObject->enterMode();
 
