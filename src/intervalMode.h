@@ -7,8 +7,11 @@ class QCheckBox;
 class QFormLayout;
 namespace mpMapInteractive
 {
-	struct intervalMode : public plotModeObject
+	struct intervalMode : public QObject, public plotModeObject
 	{
+		Q_OBJECT
+	public slots:
+		void cancel();
 	public:
 		intervalMode(qtPlot* plotObject, qtPlotData& data, unsigned char** imputedRawData, unsigned char* rawImageData, plotModeObject::imputeFunctionType imputeFunction, std::vector<double>& levels)
 			: plotModeObject(plotObject, data, imputedRawData, rawImageData, imputeFunction, levels), highlight(NULL), start(-1), end(-1), cutStart(-1), cutEnd(-1)
@@ -34,5 +37,6 @@ namespace mpMapInteractive
 		QLineEdit* clusterOrderGroupsEdit, *effortEdit, *maxDistEdit, *clusterOrderEffortEdit;
 		QLabel* undoLabel, *orderLabel, *reverseLabel, *clusterOrderLabel, *cutLabel, *pasteLabel, *effortLabel, *clusterOrderGroupsLabel, *maxDistLabel, *clusterOrderEffortLabel;
 		QCheckBox *randomStartCheckbox;
+		bool shouldCancel;
 	};
 }

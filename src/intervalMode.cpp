@@ -195,9 +195,14 @@ namespace mpMapInteractive
 					progress->setMinimum(0);
 					progress->setMaximum(100);
 
-					std::function<bool(unsigned long,unsigned long)> progressFunction = [progress](unsigned long done, unsigned long totalSteps){
+					shouldCancel = false;
+					QPushButton* cancelButton = plotObject->addCancelButton();
+					QObject::connect(cancelButton, SIGNAL(clicked(bool)), this, SLOT(cancel()));
+
+					std::function<bool(unsigned long,unsigned long)> progressFunction = [this,progress](unsigned long done, unsigned long totalSteps){
 						progress->setValue(100.0 * (double)done / (double)totalSteps);
-						return false;
+						QCoreApplication::processEvents();
+						return this->shouldCancel;
 					};
 					arsaRawArgs arsaArgs(levels, resultingPermutation);
 					arsaArgs.n = nSubMarkers;
@@ -211,6 +216,7 @@ namespace mpMapInteractive
 					arsaArgs.effortMultiplier = effortMultiple;
 					arsaRawExported(arsaArgs);
 					plotObject->deleteProgressBar(progress);
+					plotObject->deleteCancelButton(cancelButton);
 
 					int nMarkers = data.getMarkerCount();
 					totalPermutation.reserve(nMarkers);
@@ -306,7 +312,15 @@ namespace mpMapInteractive
 					progress->setMinimum(0);
 					progress->setMaximum(100);
 
-					std::function<void(unsigned long,unsigned long)> progressFunction = [progress](unsigned long done, unsigned long totalSteps){progress->setValue(100.0 * (double)done / (double)totalSteps);};
+					shouldCancel = false;
+					QPushButton* cancelButton = plotObject->addCancelButton();
+					QObject::connect(cancelButton, SIGNAL(clicked(bool)), this, SLOT(cancel()));
+
+					std::function<bool(unsigned long,unsigned long)> progressFunction = [progress,this](unsigned long done, unsigned long totalSteps){
+						progress->setValue(100.0 * (double)done / (double)totalSteps);
+						QCoreApplication::processEvents();
+						return this->shouldCancel;
+					};
 					arsaArgs args;
 					args.n = nGroups;
 					args.dist = &(dissimilarityMatrixUpper(0));
@@ -321,7 +335,8 @@ namespace mpMapInteractive
 					arsa(args);
 					orderingOfGroups.swap(args.bestPermutationAllReps);
 					plotObject->deleteProgressBar(progress);
-			
+					plotObject->deleteCancelButton(cancelButton);
+	
 					//Create an identity permutation
 					std::vector<int> totalPermutation;
 					totalPermutation.reserve(currentPermutation.size());
@@ -487,5 +502,9 @@ endComputation:
 	}
 	void intervalMode::leaveFocus()
 	{
+	}
+	void intervalMode::cancel()
+	{
+		shouldCancel = true;
 	}
 }
