@@ -193,10 +193,10 @@ namespace mpMapInteractive
 		bounding.setHeight(nMarkers + nMarkers/10.0);
 		graphicsView->setSceneRect(bounding);
 	}
-	qtPlot::qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction)
-		:currentMode(Groups), data(new qtPlotData(originalGroups, originalMarkerNames)), nOriginalMarkers((int)originalGroups.size()), rawImageData(rawImageData), imputedRawImageData(imputedRawImageData), levels(levels), isFullScreen(false), computationMutex(QMutex::NonRecursive), transparency(NULL), imputeFunction(imputeFunction)
+	qtPlot::qtPlot(unsigned char* rawImageData, std::vector<double>& levels, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction, QSharedPointer<qtPlotData> inputData)
+		:currentMode(Groups), data(inputData), nOriginalMarkers(inputData->getOriginalMarkerCount()), rawImageData(rawImageData), imputedRawImageData(imputedRawImageData), levels(levels), isFullScreen(false), computationMutex(QMutex::NonRecursive), transparency(NULL), imputeFunction(imputeFunction)
 	{
-		int nMarkers = (int)originalGroups.size();
+		int nMarkers = data->getOriginalMarkerCount();
 		initialiseImageData(nMarkers);
 		graphicsScene = new QGraphicsScene();	
 		graphicsScene->setItemIndexMethod(QGraphicsScene::NoIndex);

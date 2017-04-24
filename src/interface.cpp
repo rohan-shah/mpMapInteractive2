@@ -188,7 +188,8 @@ extern "C"
 		if (imputeFunctionUntyped == NULL) throw std::runtime_error("Unable to access imputation function of package mpMap2");
 		mpMapInteractive::qtPlot::imputeFunctionType imputeFunction = (bool (*)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction))imputeFunctionUntyped;
 
-		mpMapInteractive::qtPlot plot(&(thetaData(0)), thetaLevelsVector, groups, markerNames, imputedRawImageData, imputeFunction);
+		QSharedPointer<mpMapInteractive::qtPlotData> inputData(new mpMapInteractive::qtPlotData(groups, markerNames));
+		mpMapInteractive::qtPlot plot(&(thetaData(0)), thetaLevelsVector, imputedRawImageData, imputeFunction, inputData);
 		plot.show();
 		app.exec();
 

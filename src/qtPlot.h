@@ -30,7 +30,7 @@ namespace mpMapInteractive
 	public:
 		typedef bool (*imputeFunctionType)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction);
 		~qtPlot();
-		qtPlot(unsigned char* rawImageData, std::vector<double>& levels, const std::vector<int>& groups, const std::vector<std::string>& markerNames, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction);
+		qtPlot(unsigned char* rawImageData, std::vector<double>& levels, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction, QSharedPointer<qtPlotData> inputData);
 		QGraphicsView& getGraphicsView();
 		void signalMouseMove();
 		QGraphicsScene& getGraphicsScene();
