@@ -103,4 +103,18 @@ namespace mpMapInteractive
 	{
 		return groups;
 	}
+	qtPlotData::qtPlotData(const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames, std::vector<std::vector<int> >&& cumulativePermutations, std::vector<std::vector<int> >&& cumulativeGroups)
+		: originalMarkerNames(originalMarkerNames), originalGroups(originalGroups), cumulativePermutations(std::move(cumulativePermutations)), groups(std::move(cumulativeGroups))
+	{
+		if(originalGroups.size() != originalMarkerNames.size()) throw std::runtime_error("Internal error");
+		//set up identity permutation initially
+		for(int i = 0; i < (int)originalGroups.size(); i++) identity.push_back(i);
+
+		const std::vector<int>& currentCumulativePermutation = getCurrentPermutation();
+		currentMarkerNames.resize(currentCumulativePermutation.size());
+		for(std::size_t i = 0; i < currentCumulativePermutation.size(); i++)
+		{
+			currentMarkerNames[i] = originalMarkerNames[currentCumulativePermutation[i]];
+		}
+	}
 }

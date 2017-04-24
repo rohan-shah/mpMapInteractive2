@@ -3,7 +3,7 @@
 #include "qtPlot.h"
 extern "C"
 {
-	RcppExport SEXP qtPlotMpMap2(SEXP mpcross__)
+	RcppExport SEXP qtPlotMpMap2(SEXP mpcross__, SEXP cumulativePermutations_sexp, SEXP cumulativeGroups_sexp)
 	{
 	BEGIN_RCPP
 
@@ -124,7 +124,12 @@ extern "C"
 		{
 			throw Rcpp::not_compatible("Input mpcross@lg@allGroups must be an integer vector");
 		}
-		
+
+		Rcpp::RObject cumulativePermutations_robject = cumulativePermutations_sexp, cumulativeGroups_robject = cumulativeGroups_sexp;
+		if(cumulativePermutations_robject.isNULL() ^ cumulativeGroups_robject.isNULL())
+		{
+			throw std::runtime_error("Inputs cumulativePermutations and cumulativeGroups must both be specified");
+		}
 
 		unsigned char* imputedRawImageData = NULL;
 		if(allGroups.size() == 1)
@@ -188,7 +193,28 @@ extern "C"
 		if (imputeFunctionUntyped == NULL) throw std::runtime_error("Unable to access imputation function of package mpMap2");
 		mpMapInteractive::qtPlot::imputeFunctionType imputeFunction = (bool (*)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction))imputeFunctionUntyped;
 
-		QSharedPointer<mpMapInteractive::qtPlotData> inputData(new mpMapInteractive::qtPlotData(groups, markerNames));
+		QSharedPointer<mpMapInteractive::qtPlotData> inputData;
+		if(cumulativePermutations_robject.isNULL() && cumulativeGroups_robject.isNULL())
+		{
+			inputData.reset(new mpMapInteractive::qtPlotData(groups, markerNames));
+		}
+		else
+		{
+			Rcpp::List cumulativePermutations_list = Rcpp::as<Rcpp::List>(cumulativePermutations_robject);
+			Rcpp::List cumulativeGroups_list = Rcpp::as<Rcpp::List>(cumulativeGroups_robject);
+			if(cumulativePermutations_list.size() != cumulativeGroups_list.size())
+			{
+				throw std::runtime_error("Inputs cumulativePermutations and cumulativeGroups should be lists of the same length");
+			}
+			std::vector<std::vector<int> > cumulativePermutations, cumulativeGroups;
+			for(int i = 0; i < cumulativePermutations_list.size(); i++)
+			{
+				cumulativePermutations.push_back(Rcpp::as<std::vector<int> >(cumulativePermutations_list(i)));
+				cumulativeGroups.push_back(Rcpp::as<std::vector<int> >(cumulativeGroups_list(i)));
+			}
+			inputData.reset(new mpMapInteractive::qtPlotData(groups, markerNames, std::move(cumulativePermutations), std::move(cumulativeGroups)));
+		}
+
 		mpMapInteractive::qtPlot plot(&(thetaData(0)), thetaLevelsVector, imputedRawImageData, imputeFunction, inputData);
 		plot.show();
 		app.exec();

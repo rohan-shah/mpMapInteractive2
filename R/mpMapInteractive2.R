@@ -1,4 +1,4 @@
-mpMapInteractive2 <- function(mpcross)
+mpMapInteractive2 <- function(mpcross, permutations = NULL, groups = NULL)
 {
 	if(!isS4(mpcross))
 	{
@@ -23,7 +23,7 @@ mpMapInteractive2 <- function(mpcross)
 		warning("Markers for at least one linkage group were non-contiguous. Markers will be re-ordered so that linkage groups are in contiguous chunks")
 		mpcross <- subset(mpcross, markers = order(mpcross@lg@groups))
 	}
-	result <- .Call("mpMapInteractive2", mpcross, PACKAGE="mpMapInteractive2")
+	result <- .Call("mpMapInteractive2", mpcross, permutations, groups, PACKAGE="mpMapInteractive2")
 	markerNames <- result[[1]]
 	groups <- result[[2]]
 	names(groups) <- markerNames
