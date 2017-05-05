@@ -211,6 +211,10 @@ extern "C"
 			{
 				cumulativePermutations.push_back(Rcpp::as<std::vector<int> >(cumulativePermutations_list(i)));
 				cumulativeGroups.push_back(Rcpp::as<std::vector<int> >(cumulativeGroups_list(i)));
+				if(cumulativePermutations.back().size() != cumulativeGroups.back().size())
+				{
+					throw std::runtime_error("Every vector in input groups must have the same length as the corresponding entry in permutations");
+				}
 			}
 			inputData.reset(new mpMapInteractive::qtPlotData(groups, markerNames, std::move(cumulativePermutations), std::move(cumulativeGroups)));
 		}
