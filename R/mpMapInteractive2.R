@@ -8,6 +8,7 @@ mpMapInteractive2 <- function(mpcross, permutations = NULL, groups = NULL)
 	{
 		stop("Input mpcross must inherit from class \"mpcrossLG\"")
 	}
+	nMarkers <- nMarkers(mpcross)
 	contiguous <- TRUE
 	for(group in mpcross@lg@allGroups)
 	{
@@ -17,6 +18,14 @@ mpMapInteractive2 <- function(mpcross, permutations = NULL, groups = NULL)
 			contiguous <- FALSE
 			break
 		}
+	}
+	if(!is.null(permutations))
+	{
+		lapply(permutations, function(x)
+		{
+			r <- range(x)
+			if(r[1] < 0 || r[2] >= nMarkers) stop("Input permutations contained invalid values")
+		})
 	}
 	if(!contiguous)
 	{

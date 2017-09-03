@@ -51,6 +51,7 @@ extern "C"
 
 		Rcpp::Function markerNamesFunc("markers");
 		std::vector<std::string> markerNames = Rcpp::as<std::vector<std::string> >(markerNamesFunc(mpcross));
+		int nMarkers = (int)markerNames.size();
 
 		bool hasRF;
 		Rcpp::S4 theta;
@@ -191,7 +192,7 @@ extern "C"
 
 		DL_FUNC imputeFunctionUntyped = R_GetCCallable("mpMap2", "impute");
 		if (imputeFunctionUntyped == NULL) throw std::runtime_error("Unable to access imputation function of package mpMap2");
-		mpMapInteractive::qtPlot::imputeFunctionType imputeFunction = (bool (*)(unsigned char* theta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction))imputeFunctionUntyped;
+		mpMapInteractive::qtPlot::imputeFunctionType imputeFunction = (bool (*)(const unsigned char* theta, unsigned char* imputedTheta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction))imputeFunctionUntyped;
 
 		QSharedPointer<mpMapInteractive::qtPlotData> inputData;
 		if(cumulativePermutations_robject.isNULL() && cumulativeGroups_robject.isNULL())
@@ -209,7 +210,21 @@ extern "C"
 			std::vector<std::vector<int> > cumulativePermutations, cumulativeGroups;
 			for(int i = 0; i < cumulativePermutations_list.size(); i++)
 			{
+				std::vector<int> currentPermutationEntry = Rcpp::as<std::vector<int> >(cumulativePermutations_list(i));
+				//sort the permutation entry, check that values are unique
+				std::sort(currentPermutationEntry.begin(), currentPermutationEntry.end());
+				if(std::unique(currentPermutationEntry.begin(), currentPermutationEntry.end()) != currentPermutationEntry.end())
+				{
+					throw std::runtime_error("Input permutation data cannot have repeated markers");
+				}
+				//Check the range of the values
+				if(*std::max_element(currentPermutationEntry.begin(), currentPermutationEntry.end()) >= nMarkers || *std::min_element(currentPermutationEntry.begin(), currentPermutationEntry.end()) < 0)
+				{
+					throw std::runtime_error("Input permutation data contained values outside the allowed range");
+				}
+				//Actually add the permutation
 				cumulativePermutations.push_back(Rcpp::as<std::vector<int> >(cumulativePermutations_list(i)));
+				//Also add the corresponding groups change. 
 				cumulativeGroups.push_back(Rcpp::as<std::vector<int> >(cumulativeGroups_list(i)));
 				if(cumulativePermutations.back().size() != cumulativeGroups.back().size())
 				{
