@@ -24,6 +24,7 @@
 #include <QGraphicsItemGroup>
 #include <QSizePolicy>
 #include <QSplitter>
+#include <QCheckBox>
 namespace mpMapInteractive
 {
 	qtPlot::~qtPlot()
@@ -34,7 +35,6 @@ namespace mpMapInteractive
 		currentModeObject.clear();
 
 		imageTiles.clear();
-		delete[] imputedRawImageData;
 		delete transparency;
 
 		delete graphicsView;
@@ -150,6 +150,14 @@ namespace mpMapInteractive
 		}
 		currentModeObject->enterMode();
 	}
+	void qtPlot::changeAuxiliaryState(int newState)
+	{
+		showAux = (newState == Qt::Checked);
+		for(std::set<imageTileWithAux>::iterator currentTile = imageTiles.begin(); currentTile != imageTiles.end(); currentTile++)
+		{
+			currentTile->showAux(showAux);
+		}
+	}
 	QWidget* qtPlot::addLeftSidebar()
 	{
 		QWidget* leftSidebar = new QWidget;
@@ -159,6 +167,13 @@ namespace mpMapInteractive
 		sidebarLayout->setAlignment(Qt::AlignTop);
 		
 		sidebarLayout->addWidget(modeWidget, 0, Qt::AlignTop);
+		if(data->auxiliaryData != NULL)
+		{
+			QCheckBox* auxilaryCheckBox = new QCheckBox("Show auxilary data");
+			auxilaryCheckBox->setCheckState(Qt::Unchecked);
+			sidebarLayout->addWidget(auxilaryCheckBox, 0, Qt::AlignTop);
+			QObject::connect(auxilaryCheckBox, SIGNAL(stateChanged(int)), this, SLOT(changeAuxiliaryState(int)));
+		}
 		sidebarLayout->addSpacing(1);
 		sidebarLayout->addWidget(groupsModeObject->frame, 1, Qt::AlignTop);
 		sidebarLayout->addWidget(intervalModeObject->frame, 1, Qt::AlignTop);
@@ -179,7 +194,7 @@ namespace mpMapInteractive
 		graphicsView->setSceneRect(bounding);
 	}
 	qtPlot::qtPlot(QSharedPointer<qtPlotData> inputData)
-		:currentMode(Groups), data(inputData), nOriginalMarkers(inputData->getOriginalMarkerCount()), isFullScreen(false), computationMutex(QMutex::NonRecursive), transparency(NULL)
+		:currentMode(Groups), data(inputData), nOriginalMarkers(inputData->getOriginalMarkerCount()), isFullScreen(false), computationMutex(QMutex::NonRecursive), transparency(NULL), showAux(false)
 	{
 		int nMarkers = data->getOriginalMarkerCount();
 		constructColourTableTheta(colours, inputData->levels);
@@ -380,7 +395,7 @@ namespace mpMapInteractive
 				located = imageTileWithAux::find(imageTiles, rowGroup, columnGroup);
 				if(located == imageTiles.end())
 				{
-					imageTileWithAux newTile(data->rawImageData, data->auxiliaryData, nOriginalMarkers, rowGroup, columnGroup, expectedRowIndices, expectedColumnIndices, graphicsScene, colours, data->auxColours);
+					imageTileWithAux newTile(data->rawImageData, data->auxiliaryData, nOriginalMarkers, rowGroup, columnGroup, expectedRowIndices, expectedColumnIndices, graphicsScene, colours, data->auxColours, showAux);
 					imageTiles.insert(std::move(newTile));
 				}
 				//set position
@@ -389,8 +404,10 @@ namespace mpMapInteractive
 				{
 					throw std::runtime_error("Internal error");
 				}
-				QGraphicsItemGroup* currentItem = located->getItem();
-				currentItem->setPos(startOfRowGroup, startOfColumnGroup);
+				QGraphicsItemGroup* currentThetaItem = located->getThetaItem();
+				QGraphicsItemGroup* currentAuxItem = located->getAuxItem();
+				currentThetaItem->setPos(startOfRowGroup, startOfColumnGroup);
+				currentAuxItem->setPos(startOfRowGroup, startOfColumnGroup);
 			}
 		}
 		//Go through and remove unnecessary groups. Anything that doesn't match here just gets wiped
@@ -419,14 +436,17 @@ namespace mpMapInteractive
 					}*/
 					if(!currentTile->checkIndices(expectedRowIndices, expectedColumnIndices)) goto delete_tile;
 				//}
-				QGraphicsItemGroup* pixMapItem = currentTile->getItem();
+				QGraphicsItemGroup* pixMapThetaItem = currentTile->getThetaItem();
+				QGraphicsItemGroup* pixMapAuxItem = currentTile->getAuxItem();
 				if(rowGroupIndexInAll % 2 == columnGroupIndexInAll % 2)
 				{
-					pixMapItem->setZValue(1);
+					pixMapThetaItem->setZValue(1);
+					pixMapAuxItem->setZValue(1);
 				}
 				else
 				{
-					pixMapItem->setZValue(-1);
+					pixMapThetaItem->setZValue(-1);
+					pixMapAuxItem->setZValue(-1);
 				}
 				currentTile++;
 				continue;

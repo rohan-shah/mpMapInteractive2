@@ -48,6 +48,7 @@ namespace mpMapInteractive
 	public slots:
 		void graphicsLeaveEvent(QEvent*);
 		void modeChanged(const QString&);
+		void changeAuxiliaryState(int);
 	private:
 		void setBoundingBox(int nMarkers);
 		void doImputation(int group);
@@ -69,8 +70,6 @@ namespace mpMapInteractive
 
 		//needed as the stride for the two double arrays below. 
 		int nOriginalMarkers;
-		unsigned char* rawImageData;
-		unsigned char* imputedRawImageData;
 		std::vector<double> levels;
 		bool isFullScreen;
 		ZoomGraphicsView* graphicsView;
@@ -96,5 +95,6 @@ namespace mpMapInteractive
 		QShortcut* cancelShortcut;
 		
 		QVector<QRgb> colours;
+		bool showAux;
 	};
 }

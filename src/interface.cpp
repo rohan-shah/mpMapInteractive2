@@ -63,7 +63,7 @@ extern "C"
 			double max = *minmax.second;
 			if(min != min || max != max) throw std::runtime_error("Auxiliary data cannot have missing values");
 			double range = max - min;
-			double incrementSize = range / 256;
+			double incrementSize = range / 255;
 
 			auxiliaryData.resize(nMarkers * (nMarkers + 1ULL) / 2ULL);
 			for(unsigned long long column = 0; column < nMarkers; column++)
@@ -73,6 +73,7 @@ extern "C"
 					auxiliaryData[(column * (column + 1ULL)) / 2ULL + row] = (unsigned char)std::floor((auxiliaryDataSymmetric(row, column) - min) / incrementSize);
 				}
 			}
+			auxiliaryPointer = &(auxiliaryData[0]);
 		}
 
 		bool hasRF;
@@ -256,6 +257,14 @@ extern "C"
 			inputData.reset(new mpMapInteractive::qtPlotData(groups, markerNames, std::move(cumulativePermutations), std::move(cumulativeGroups)));
 		}
 		inputData->auxiliaryData = auxiliaryPointer;
+		inputData->auxColours.resize(256);
+		for(int i = 0; i < 256; i++)
+		{
+			QColor colour;
+			colour.setHsvF(i* (1.0f/6.0f)/255.0, 1.0, 1.0);
+			inputData->auxColours[i] = colour.rgb();
+		}
+
 		inputData->rawImageData = &(thetaData(0));
 		inputData->levels = thetaLevelsVector;
 		inputData->imputedRawImageData = imputedRawImageData;

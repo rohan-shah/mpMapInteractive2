@@ -5,10 +5,21 @@ namespace mpMapInteractive
 	{
 		delete aux;
 	}
-	imageTileWithAux::imageTileWithAux(unsigned char* data, const unsigned char* auxData, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene, const QVector<QRgb>& colours, const QVector<QRgb>& auxColours)
+	imageTileWithAux::imageTileWithAux(unsigned char* data, const unsigned char* auxData, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene, const QVector<QRgb>& colours, const QVector<QRgb>& auxColours, bool showAux)
 		: rowGroup(rowGroup), columnGroup(columnGroup), theta(data, dataRows, rowIndices, columnIndices, graphicsScene, colours), aux(NULL)
 	{
-		if(auxData != NULL) aux = new imageTile(auxData, dataRows, rowIndices, columnIndices, graphicsScene, auxColours);
+		if(auxData != NULL)
+		{
+			aux = new imageTile(auxData, dataRows, rowIndices, columnIndices, graphicsScene, auxColours);
+			if(showAux) theta.getItem()->setVisible(false);
+			else aux->getItem()->setVisible(false);
+		}
+	}
+	void imageTileWithAux::showAux(bool show) const
+	{
+		if(aux == NULL) throw std::runtime_error("Internal error");
+		theta.getItem()->setVisible(!show);
+		aux->getItem()->setVisible(show);
 	}
 	imageTileWithAux::imageTileWithAux(imageTileWithAux&& other)
 		: rowGroup(other.rowGroup), columnGroup(other.columnGroup), theta(std::move(other.theta))
@@ -32,7 +43,12 @@ namespace mpMapInteractive
 	{
 		return columnGroup;
 	}
-	QGraphicsItemGroup* imageTileWithAux::getItem() const
+	QGraphicsItemGroup* imageTileWithAux::getAuxItem() const
+	{
+		if(aux != NULL) return aux->getItem();
+		else return NULL;
+	}
+	QGraphicsItemGroup* imageTileWithAux::getThetaItem() const
 	{
 		return theta.getItem();
 	}

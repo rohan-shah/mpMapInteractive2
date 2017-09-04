@@ -10,14 +10,16 @@ namespace mpMapInteractive
 		~imageTileWithAux();
 		imageTileWithAux(imageTileWithAux&& other);
 		imageTileWithAux& operator=(imageTileWithAux&& other);
-		imageTileWithAux(unsigned char* data, const unsigned char* auxData, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene, const QVector<QRgb>& colours, const QVector<QRgb>& auxColours);
+		imageTileWithAux(unsigned char* data, const unsigned char* auxData, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene, const QVector<QRgb>& colours, const QVector<QRgb>& auxColours, bool showAux);
 		int getRowGroup() const;
 		int getColumnGroup() const;
 		static std::set<imageTileWithAux, imageTileComparer>::const_iterator find(const std::set<imageTileWithAux, imageTileComparer>& collection, int rowGroup, int columnGroup);
 		bool checkIndices(const std::vector<int>& otherRowIndices, const std::vector<int>& otherColumnIndices) const;
 		void deleteMarker(int marker) const;
 		void shiftMarkers(int cutStartIndex, int cutEndIndex, int startIndex) const;
-		QGraphicsItemGroup* getItem() const;
+		QGraphicsItemGroup* getAuxItem() const;
+		QGraphicsItemGroup* getThetaItem() const;
+		void showAux(bool show) const;
 	private:
 		imageTileWithAux(const imageTileWithAux& other);
 		imageTileWithAux(const QVector<QRgb>& other);
