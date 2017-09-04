@@ -10,15 +10,15 @@ namespace mpMapInteractive
 			delete *i;
 		}
 	}
-	imageTile::imageTile()
-		: pixMapItems(0, 0)
+	imageTile::imageTile(const QVector<QRgb>& colours)
+		: pixMapItems(0, 0), colours(colours)
 	{}
 	imageTile::imageTile(imageTile&& other)
-		: data(other.data), rowIndices(std::move(other.rowIndices)), columnIndices(std::move(other.columnIndices)), rowGroup(other.rowGroup), columnGroup(other.columnGroup), pixMapItems(std::move(other.pixMapItems)), groupItem(std::move(other.groupItem)), columnPartition(std::move(other.columnPartition)), rowPartition(std::move(other.rowPartition)), graphicsScene(other.graphicsScene)
+		: data(other.data), rowIndices(std::move(other.rowIndices)), columnIndices(std::move(other.columnIndices)), pixMapItems(std::move(other.pixMapItems)), groupItem(std::move(other.groupItem)), columnPartition(std::move(other.columnPartition)), rowPartition(std::move(other.rowPartition)), graphicsScene(other.graphicsScene), colours(other.colours)
 	{
 	}
-	imageTile::imageTile(std::vector<uchar>* data, int dataRows, int rowGroup, int columnGroup, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene)
-		: data(data), rowIndices(rowIndices), columnIndices(columnIndices), rowGroup(rowGroup), columnGroup(columnGroup), pixMapItems(0, 0), graphicsScene(graphicsScene)
+	imageTile::imageTile(const unsigned char* data, int dataRows, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene, const QVector<QRgb>& colours)
+		: data(data), rowIndices(rowIndices), columnIndices(columnIndices), pixMapItems(0, 0), graphicsScene(graphicsScene), colours(colours)
 	{
 		groupItem.reset(new QGraphicsItemGroup);
 		graphicsScene->addItem(groupItem.get());
@@ -27,7 +27,6 @@ namespace mpMapInteractive
 	}
 	void imageTile::generateSubTile(int columnStart, int columnEnd, int rowStart, int rowEnd, QImage& image) const
 	{
-		std::vector<uchar>& data = *(this->data);
 		for(size_t j = columnStart; j < std::min(columnEnd, (int)columnIndices.size()); j++)
 		{
 			uchar* reorderedData = image.scanLine((int)j - columnStart);
@@ -42,7 +41,7 @@ namespace mpMapInteractive
 	void imageTile::makeSubtileBoundariesBefore(std::vector<int>& markerOffsets) const
 	{
 		//There is only one argument, so we require that this tile be symmetric / on a diagonal
-		if(rowGroup != columnGroup || pixMapItems.getNRows() != pixMapItems.getNColumns())
+		if(pixMapItems.getNRows() != pixMapItems.getNColumns())
 		{
 			throw std::runtime_error("Cannot call makeSubtileBoundariesBefore except on a symmetric imageTile object");
 		}
@@ -132,8 +131,6 @@ namespace mpMapInteractive
 		{
 			throw std::runtime_error("Internal error");
 		}
-		QVector<QRgb> colours;
-		constructColourTable(nColours, colours);
 		//Copy across all the subtiles that can be reused, and rebuild the tiles that can't
 		int cumulativeX = 0;
 		for(int newTileX = 0; newTileX < newTilesCount; newTileX++)
@@ -182,7 +179,6 @@ namespace mpMapInteractive
 	}
 	void imageTile::generateSubTile(const std::vector<int>& columnIndices, const std::vector<int>& rowIndices, QImage& image) const
 	{
-		std::vector<uchar>& data = *(this->data);
 		for(size_t j = 0; j < (int)columnIndices.size(); j++)
 		{
 			uchar* reorderedData = image.scanLine((int)j);
@@ -208,10 +204,7 @@ namespace mpMapInteractive
 		QImage* fullSizeImage = new QImage(subTileSize, subTileSize, QImage::Format_Indexed8);
 		
 		//get 100 colours
-		QVector<QRgb> colours;
-		constructColourTable(nColours, colours);
 		fullSizeImage->setColorTable(colours);
-		std::vector<uchar>& data = *(this->data);
 
 		for(int subTileColumn = 0; subTileColumn < subTileColumns; subTileColumn++)
 		{
@@ -282,13 +275,6 @@ namespace mpMapInteractive
 		}
 		return true;
 	}
-	std::set<imageTile>::const_iterator imageTile::find(const std::set<imageTile, imageTileComparer>& collection, int rowGroup, int columnGroup)
-	{
-		imageTile toFind;
-		toFind.rowGroup = rowGroup;
-		toFind.columnGroup = columnGroup;
-		return collection.find(toFind);
-	}
 	const std::vector<int>& imageTile::getRowIndices() const
 	{
 		return rowIndices;
@@ -301,20 +287,8 @@ namespace mpMapInteractive
 	{
 		return groupItem.get();
 	}
-	int imageTile::getRowGroup() const
-	{
-		return rowGroup;
-	}
-	int imageTile::getColumnGroup() const
-	{
-		return columnGroup;
-	}
 	void imageTile::deleteMarker(int markerIndex) const
 	{
-		//get 100 colours
-		QVector<QRgb> colours;
-		constructColourTable(nColours, colours);
-
 		int subTileColumns = columnPartition.size();
 		int subTileRows = rowPartition.size();
 		bool shouldRegenerate = false;
@@ -466,11 +440,6 @@ namespace mpMapInteractive
 	}
 	void imageTile::shiftMarkers(int cutStartIndex, int cutEndIndex, int startIndex) const
 	{
-		//This tile has to be symmetric, otherwise throw an error
-		if(rowGroup != columnGroup)
-		{
-			throw std::runtime_error("Cannot call shiftMarkers except on a symmetric imageTile object");
-		}
 		if(startIndex >= cutStartIndex && startIndex <= cutEndIndex+1)
 		{
 			throw std::runtime_error("Trying to cut and paste to the same location");

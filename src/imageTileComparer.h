@@ -2,10 +2,10 @@
 #define IMAGE_TILE_COMPARER_HEADER_GUARD
 namespace mpMapInteractive
 {
-	class imageTile;
+	class imageTileWithAux;
 	struct imageTileComparer
 	{
-		bool operator()(const imageTile& first, const imageTile& second) const;
+		bool operator()(const imageTileWithAux& first, const imageTileWithAux& second) const;
 	};
 }
 #endif

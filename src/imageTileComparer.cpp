@@ -1,8 +1,8 @@
 #include "imageTileComparer.h"
-#include "imageTile.h"
+#include "imageTileWithAux.h"
 namespace mpMapInteractive
 {
-	bool imageTileComparer::operator()(const imageTile& first, const imageTile& second) const
+	bool imageTileComparer::operator()(const imageTileWithAux& first, const imageTileWithAux& second) const
 	{
 		int firstRowGroup = first.getRowGroup(), secondRowGroup = second.getRowGroup();
 		if(firstRowGroup < secondRowGroup) return true;

@@ -8,8 +8,7 @@
 #include <vector>
 #include <QMutex>
 #include <set>
-#include "imageTileComparer.h"
-#include "imageTile.h"
+#include "imageTileWithAux.h"
 #include <functional>
 #include "qtPlotData.h"
 #include <QShortcut>
@@ -28,9 +27,8 @@ namespace mpMapInteractive
 	{
 		Q_OBJECT
 	public:
-		typedef bool (*imputeFunctionType)(const unsigned char* theta, unsigned char* imputedTheta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction);
 		~qtPlot();
-		qtPlot(unsigned char* rawImageData, std::vector<double>& levels, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction, QSharedPointer<qtPlotData> inputData);
+		qtPlot(QSharedPointer<qtPlotData> inputData);
 		QGraphicsView& getGraphicsView();
 		void signalMouseMove();
 		QGraphicsScene& getGraphicsScene();
@@ -42,7 +40,7 @@ namespace mpMapInteractive
 		void deleteCancelButton(QPushButton*);
 		QProgressBar* addProgressBar();
 		void deleteProgressBar(QProgressBar*);
-		std::set<imageTile, imageTileComparer> imageTiles;
+		std::set<imageTileWithAux, imageTileComparer> imageTiles;
 	protected:
 		void closeEvent(QCloseEvent* event);
 		void keyPressEvent(QKeyEvent* event);
@@ -51,7 +49,6 @@ namespace mpMapInteractive
 		void graphicsLeaveEvent(QEvent*);
 		void modeChanged(const QString&);
 	private:
-		imputeFunctionType imputeFunction;
 		void setBoundingBox(int nMarkers);
 		void doImputation(int group);
 		void graphicsMouseMove(QPointF scenePos);
@@ -74,12 +71,11 @@ namespace mpMapInteractive
 		int nOriginalMarkers;
 		unsigned char* rawImageData;
 		unsigned char* imputedRawImageData;
-		std::vector<double>& levels;
+		std::vector<double> levels;
 		bool isFullScreen;
 		ZoomGraphicsView* graphicsView;
 		QLabel* statusLabel;
 		QGraphicsScene* graphicsScene;
-		std::vector<uchar> originalDataToChar;
 		QStatusBar* statusBar;
 
 		QLabel* positionXLabel, *positionYLabel;
@@ -98,5 +94,7 @@ namespace mpMapInteractive
 		QSharedPointer<intervalMode> intervalModeObject;
 		QSharedPointer<singleMode> singleModeObject;
 		QShortcut* cancelShortcut;
+		
+		QVector<QRgb> colours;
 	};
 }

@@ -113,21 +113,6 @@ namespace mpMapInteractive
 		statusBar->addPermanentWidget(displayFrame);
 		setStatusBar(statusBar);
 	}
-	void qtPlot::initialiseImageData(int nMarkers)
-	{
-		originalDataToChar.resize(((unsigned long long)nMarkers * ((unsigned long long)nMarkers+1ULL))/2ULL);
-		//Conversion vector from levels to colours. Filled with the NA colour. 
-		std::vector<uchar> levelToChar(0xff+1, nColours);
-		for(int i = 0; i < levels.size(); i++)
-		{
-			levelToChar[i] = (uchar)std::floor(0.5f + (nColours - 1)* levels[i] / 0.5);
-		}
-		//scale data from float to integer
-		for(unsigned long long i = 0; i < ((unsigned long long)nMarkers*((unsigned long long)nMarkers+1ULL))/2ULL; i++)
-		{
-			originalDataToChar[i] = levelToChar[rawImageData[i]];
-		}
-	}
 	QFrame* qtPlot::createMode()
 	{
 		QFrame* comboContainer = new QFrame;
@@ -193,11 +178,12 @@ namespace mpMapInteractive
 		bounding.setHeight(nMarkers + nMarkers/10.0);
 		graphicsView->setSceneRect(bounding);
 	}
-	qtPlot::qtPlot(unsigned char* rawImageData, std::vector<double>& levels, unsigned char* imputedRawImageData, imputeFunctionType imputeFunction, QSharedPointer<qtPlotData> inputData)
-		:currentMode(Groups), data(inputData), nOriginalMarkers(inputData->getOriginalMarkerCount()), rawImageData(rawImageData), imputedRawImageData(imputedRawImageData), levels(levels), isFullScreen(false), computationMutex(QMutex::NonRecursive), transparency(NULL), imputeFunction(imputeFunction)
+	qtPlot::qtPlot(QSharedPointer<qtPlotData> inputData)
+		:currentMode(Groups), data(inputData), nOriginalMarkers(inputData->getOriginalMarkerCount()), isFullScreen(false), computationMutex(QMutex::NonRecursive), transparency(NULL)
 	{
 		int nMarkers = data->getOriginalMarkerCount();
-		initialiseImageData(nMarkers);
+		constructColourTableTheta(colours, inputData->levels);
+
 		graphicsScene = new QGraphicsScene();	
 		graphicsScene->setItemIndexMethod(QGraphicsScene::NoIndex);
 		
@@ -220,9 +206,9 @@ namespace mpMapInteractive
 
 		addStatusBar();
 
-		groupsModeObject.reset(new mpMapInteractive::groupsMode(this, *data, &this->imputedRawImageData, rawImageData, imputeFunction, levels));
-		intervalModeObject.reset(new mpMapInteractive::intervalMode(this, *data, &this->imputedRawImageData, rawImageData, imputeFunction, levels));
-		singleModeObject.reset(new mpMapInteractive::singleMode(this, *data, &this->imputedRawImageData, rawImageData, imputeFunction, levels));
+		groupsModeObject.reset(new mpMapInteractive::groupsMode(this, *data, &(data->imputedRawImageData), data->rawImageData, data->imputeFunction, data->levels));
+		intervalModeObject.reset(new mpMapInteractive::intervalMode(this, *data, &(data->imputedRawImageData), data->rawImageData, data->imputeFunction, data->levels));
+		singleModeObject.reset(new mpMapInteractive::singleMode(this, *data, &(data->imputedRawImageData), data->rawImageData, data->imputeFunction, data->levels));
 		currentModeObject = groupsModeObject;
 		QWidget* sidebarWidget = addLeftSidebar();
 		
@@ -377,7 +363,7 @@ namespace mpMapInteractive
 			for(int columnGroupCounter = 0; columnGroupCounter < nGroups; columnGroupCounter++)
 			{
 				int columnGroup = uniqueGroups[columnGroupCounter];
-				std::set<imageTile, imageTileComparer>::const_iterator located = imageTile::find(imageTiles, rowGroup, columnGroup);
+				std::set<imageTileWithAux, imageTileComparer>::const_iterator located = imageTileWithAux::find(imageTiles, rowGroup, columnGroup);
 				int startOfRowGroup = startGroups[rowGroupCounter], startOfColumnGroup = startGroups[columnGroupCounter];
 
 				std::vector<int>& expectedRowIndices = expectedIndices[rowGroupCounter];
@@ -391,14 +377,14 @@ namespace mpMapInteractive
 					}
 				}
 				//Add in any rows / column that are now missing
-				located = imageTile::find(imageTiles, rowGroup, columnGroup);
+				located = imageTileWithAux::find(imageTiles, rowGroup, columnGroup);
 				if(located == imageTiles.end())
 				{
-					imageTile newTile(&originalDataToChar, nOriginalMarkers, rowGroup, columnGroup, expectedRowIndices, expectedColumnIndices, graphicsScene);
+					imageTileWithAux newTile(data->rawImageData, data->auxiliaryData, nOriginalMarkers, rowGroup, columnGroup, expectedRowIndices, expectedColumnIndices, graphicsScene, colours, data->auxColours);
 					imageTiles.insert(std::move(newTile));
 				}
 				//set position
-				located = imageTile::find(imageTiles, rowGroup, columnGroup);
+				located = imageTileWithAux::find(imageTiles, rowGroup, columnGroup);
 				if(located == imageTiles.end())
 				{
 					throw std::runtime_error("Internal error");
@@ -408,7 +394,7 @@ namespace mpMapInteractive
 			}
 		}
 		//Go through and remove unnecessary groups. Anything that doesn't match here just gets wiped
-		std::set<imageTile>::iterator currentTile = imageTiles.begin();
+		std::set<imageTileWithAux>::iterator currentTile = imageTiles.begin();
 		while(currentTile != imageTiles.end())
 		{
 			{
@@ -434,7 +420,7 @@ namespace mpMapInteractive
 					if(!currentTile->checkIndices(expectedRowIndices, expectedColumnIndices)) goto delete_tile;
 				//}
 				QGraphicsItemGroup* pixMapItem = currentTile->getItem();
-				if(rowGroupIndexInAll %2 == columnGroupIndexInAll %2)
+				if(rowGroupIndexInAll % 2 == columnGroupIndexInAll % 2)
 				{
 					pixMapItem->setZValue(1);
 				}

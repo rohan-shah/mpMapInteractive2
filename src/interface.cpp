@@ -3,7 +3,7 @@
 #include "qtPlot.h"
 extern "C"
 {
-	RcppExport SEXP qtPlotMpMap2(SEXP mpcross__, SEXP cumulativePermutations_sexp, SEXP cumulativeGroups_sexp)
+	RcppExport SEXP qtPlotMpMap2(SEXP mpcross__, SEXP cumulativePermutations_sexp, SEXP cumulativeGroups_sexp, SEXP auxiliaryData_sexp)
 	{
 	BEGIN_RCPP
 
@@ -51,7 +51,29 @@ extern "C"
 
 		Rcpp::Function markerNamesFunc("markers");
 		std::vector<std::string> markerNames = Rcpp::as<std::vector<std::string> >(markerNamesFunc(mpcross));
-		int nMarkers = (int)markerNames.size();
+		unsigned long long nMarkers = markerNames.size();
+
+		const unsigned char* auxiliaryPointer = NULL;
+		std::vector<unsigned char> auxiliaryData;
+		if(!Rcpp::as<Rcpp::RObject>(auxiliaryData_sexp).isNULL())
+		{
+			Rcpp::NumericMatrix auxiliaryDataSymmetric = auxiliaryData_sexp;
+			auto minmax = std::minmax_element(auxiliaryDataSymmetric.begin(), auxiliaryDataSymmetric.end());
+			double min = *minmax.first;
+			double max = *minmax.second;
+			if(min != min || max != max) throw std::runtime_error("Auxiliary data cannot have missing values");
+			double range = max - min;
+			double incrementSize = range / 256;
+
+			auxiliaryData.resize(nMarkers * (nMarkers + 1ULL) / 2ULL);
+			for(unsigned long long column = 0; column < nMarkers; column++)
+			{
+				for(unsigned long long row = 0; row <= column; row++)
+				{
+					auxiliaryData[(column * (column + 1ULL)) / 2ULL + row] = (unsigned char)std::floor((auxiliaryDataSymmetric(row, column) - min) / incrementSize);
+				}
+			}
+		}
 
 		bool hasRF;
 		Rcpp::S4 theta;
@@ -192,7 +214,7 @@ extern "C"
 
 		DL_FUNC imputeFunctionUntyped = R_GetCCallable("mpMap2", "impute");
 		if (imputeFunctionUntyped == NULL) throw std::runtime_error("Unable to access imputation function of package mpMap2");
-		mpMapInteractive::qtPlot::imputeFunctionType imputeFunction = (bool (*)(const unsigned char* theta, unsigned char* imputedTheta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction))imputeFunctionUntyped;
+		mpMapInteractive::qtPlotData::imputeFunctionType imputeFunction = (mpMapInteractive::qtPlotData::imputeFunctionType)imputeFunctionUntyped;
 
 		QSharedPointer<mpMapInteractive::qtPlotData> inputData;
 		if(cumulativePermutations_robject.isNULL() && cumulativeGroups_robject.isNULL())
@@ -233,8 +255,13 @@ extern "C"
 			}
 			inputData.reset(new mpMapInteractive::qtPlotData(groups, markerNames, std::move(cumulativePermutations), std::move(cumulativeGroups)));
 		}
+		inputData->auxiliaryData = auxiliaryPointer;
+		inputData->rawImageData = &(thetaData(0));
+		inputData->levels = thetaLevelsVector;
+		inputData->imputedRawImageData = imputedRawImageData;
+		inputData->imputeFunction = imputeFunction;
 
-		mpMapInteractive::qtPlot plot(&(thetaData(0)), thetaLevelsVector, imputedRawImageData, imputeFunction, inputData);
+		mpMapInteractive::qtPlot plot(inputData);
 		plot.show();
 		app.exec();
 
