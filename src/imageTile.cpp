@@ -344,6 +344,7 @@ namespace mpMapInteractive
 
 						QGraphicsPixmapItem* newItem = graphicsScene->addPixmap(pixMap);
 						newItem->setPos(oldPos);
+						groupItem->addToGroup(newItem);
 						delete pixMapItems(subTileRow, columnIndex);
 						pixMapItems(subTileRow, columnIndex) = newItem;
 						delete newImage;
@@ -415,6 +416,7 @@ namespace mpMapInteractive
 
 						QGraphicsPixmapItem* newItem = graphicsScene->addPixmap(pixMap);
 						newItem->setPos(oldPos);
+						groupItem->addToGroup(newItem);
 						delete pixMapItems(rowIndex, subTileColumn);
 						pixMapItems(rowIndex, subTileColumn) = newItem;
 						delete newImage;

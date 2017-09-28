@@ -404,10 +404,7 @@ namespace mpMapInteractive
 				{
 					throw std::runtime_error("Internal error");
 				}
-				QGraphicsItemGroup* currentThetaItem = located->getThetaItem();
-				QGraphicsItemGroup* currentAuxItem = located->getAuxItem();
-				currentThetaItem->setPos(startOfRowGroup, startOfColumnGroup);
-				currentAuxItem->setPos(startOfRowGroup, startOfColumnGroup);
+				located->setPos(startOfRowGroup, startOfColumnGroup);
 			}
 		}
 		//Go through and remove unnecessary groups. Anything that doesn't match here just gets wiped
@@ -436,17 +433,13 @@ namespace mpMapInteractive
 					}*/
 					if(!currentTile->checkIndices(expectedRowIndices, expectedColumnIndices)) goto delete_tile;
 				//}
-				QGraphicsItemGroup* pixMapThetaItem = currentTile->getThetaItem();
-				QGraphicsItemGroup* pixMapAuxItem = currentTile->getAuxItem();
 				if(rowGroupIndexInAll % 2 == columnGroupIndexInAll % 2)
 				{
-					pixMapThetaItem->setZValue(1);
-					pixMapAuxItem->setZValue(1);
+					currentTile->setZValue(1);
 				}
 				else
 				{
-					pixMapThetaItem->setZValue(-1);
-					pixMapAuxItem->setZValue(-1);
+					currentTile->setZValue(-1);
 				}
 				currentTile++;
 				continue;

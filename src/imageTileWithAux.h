@@ -17,9 +17,9 @@ namespace mpMapInteractive
 		bool checkIndices(const std::vector<int>& otherRowIndices, const std::vector<int>& otherColumnIndices) const;
 		void deleteMarker(int marker) const;
 		void shiftMarkers(int cutStartIndex, int cutEndIndex, int startIndex) const;
-		QGraphicsItemGroup* getAuxItem() const;
-		QGraphicsItemGroup* getThetaItem() const;
 		void showAux(bool show) const;
+		void setPos(double x, double y) const;
+		void setZValue(double z) const;
 	private:
 		imageTileWithAux(const imageTileWithAux& other);
 		imageTileWithAux(const QVector<QRgb>& other);

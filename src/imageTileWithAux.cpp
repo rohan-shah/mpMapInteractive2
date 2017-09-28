@@ -15,6 +15,16 @@ namespace mpMapInteractive
 			else aux->getItem()->setVisible(false);
 		}
 	}
+	void imageTileWithAux::setPos(double x, double y) const
+	{
+		theta.getItem()->setPos(x, y);
+		if(aux != NULL) aux->getItem()->setPos(x, y);
+	}
+	void imageTileWithAux::setZValue(double z) const
+	{
+		theta.getItem()->setZValue(z);
+		if(aux != NULL) aux->getItem()->setZValue(z);
+	}
 	void imageTileWithAux::showAux(bool show) const
 	{
 		if(aux == NULL) throw std::runtime_error("Internal error");
@@ -42,15 +52,6 @@ namespace mpMapInteractive
 	int imageTileWithAux::getColumnGroup() const
 	{
 		return columnGroup;
-	}
-	QGraphicsItemGroup* imageTileWithAux::getAuxItem() const
-	{
-		if(aux != NULL) return aux->getItem();
-		else return NULL;
-	}
-	QGraphicsItemGroup* imageTileWithAux::getThetaItem() const
-	{
-		return theta.getItem();
 	}
 	void imageTileWithAux::shiftMarkers(int cutStartIndex, int cutEndIndex, int startIndex) const
 	{
