@@ -147,10 +147,10 @@ if(WIN32)
 			#Now for platform stuff
 			get_filename_component(QT_LIB_DIR "${QtGui_location}" DIRECTORY)
 			if(EXISTS ${QT_LIB_DIR}/../plugins/platforms/qwindowsd.dll)
-				file(COPY "${QT_LIB_DIR}/../plugins/platforms/qwindowsd.dll" DESTINATION "${CMAKE_BINARY_DIR}/../${BUILD_TYPE}/inst/libs/x64/platforms/")
+				file(COPY "${QT_LIB_DIR}/../plugins/platforms/qwindowsd.dll" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/../${BUILD_TYPE}/inst/libs/x64/platforms/")
 			endif()
 			if(EXISTS "${QT_LIB_DIR}/../plugins/platforms/qwindows.dll")
-				file(COPY "${QT_LIB_DIR}/../plugins/platforms/qwindows.dll" DESTINATION "${CMAKE_BINARY_DIR}/../${BUILD_TYPE}/inst/libs/x64/platforms/")
+				file(COPY "${QT_LIB_DIR}/../plugins/platforms/qwindows.dll" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/../${BUILD_TYPE}/inst/libs/x64/platforms/")
 			endif()
 
 			set_target_properties(mpMapInteractive2 PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${BUILD_TYPE_UPPER} ${CMAKE_CURRENT_BINARY_DIR}/../${BUILD_TYPE}/inst/libs/x64/ PDB_OUTPUT_DIRECTORY_${BUILD_TYPE_UPPER} ${CMAKE_CURRENT_BINARY_DIR}/../${BUILD_TYPE}/inst/libs/x64/)
