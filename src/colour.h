@@ -6,5 +6,6 @@ namespace mpMapInteractive
 {
 	static const int nColours = 100;
 	void constructColourTable(int n, QVector<QRgb>& vector);
+	void constructColourTableTheta(QVector<QRgb>& colours, const std::vector<double>& levels);
 }
 #endif

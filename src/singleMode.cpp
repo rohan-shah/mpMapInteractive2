@@ -48,7 +48,7 @@ namespace mpMapInteractive
 				data.applyPermutation(permutation, newGroups);
 				//Get out the image tiles
 				//Go through them and tell each one to remove the marker. We do this because we can do this more efficiently than just letting dataChanged() recreate everything from scratch. The changes we make to the image tiles here mean that dataChanged() will decide that nothing actually needs to be done. Although it will still delete imageTiles which become empty. 
-				for(std::set<imageTile, imageTileComparer>::iterator i = plotObject->imageTiles.begin(); i != plotObject->imageTiles.end(); i++)
+				for(std::set<imageTileWithAux, imageTileComparer>::iterator i = plotObject->imageTiles.begin(); i != plotObject->imageTiles.end(); i++)
 				{
 					i->deleteMarker(markerAtPosition);
 				}

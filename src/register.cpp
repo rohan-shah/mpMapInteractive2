@@ -6,7 +6,7 @@ extern "C"
 {
 	R_CallMethodDef callMethods[] = 
 	{
-		{"mpMapInteractive2", (DL_FUNC)&qtPlotMpMap2, 3},
+		{"mpMapInteractive2", (DL_FUNC)&qtPlotMpMap2, 4},
 		{"loadQT", (DL_FUNC)&loadQT, 0},
 		{NULL, NULL, 0}
 	};
