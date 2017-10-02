@@ -44,6 +44,7 @@ namespace mpMapInteractive
 		theta = std::move(theta);
 		aux = other.aux;
 		other.aux = NULL;
+		return *this;
 	}
 	int imageTileWithAux::getRowGroup() const
 	{
