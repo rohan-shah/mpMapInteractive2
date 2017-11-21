@@ -11,7 +11,7 @@ namespace mpMapInteractive
 	struct plotModeObject
 	{
 	public:
-		typedef bool (*imputeFunctionType)(const unsigned char* originalTheta, unsigned char* imputedTheta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction);
+		typedef bool (*imputeFunctionType)(const unsigned char* originalTheta, unsigned char* imputedTheta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::function<void(unsigned long, unsigned long)> statusFunction, bool allErrors, std::vector<std::pair<int, int> >& reportedError);
 		plotModeObject(qtPlot* plotObject, qtPlotData& data, unsigned char** imputedRawData, unsigned char* rawImageData, imputeFunctionType imputeFunction, std::vector<double>& levels)
 			: data(data), plotObject(plotObject), highlightColour("blue"), imputedRawData(imputedRawData), rawImageData(rawImageData), imputeFunction(imputeFunction), levels(levels)
 		{

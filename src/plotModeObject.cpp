@@ -20,7 +20,8 @@ namespace mpMapInteractive
 
 		std::string error;
 		std::function<void(unsigned long, unsigned long)> progressFunction = [](unsigned long, unsigned long){};
-		bool ok = imputeFunction(rawImageData, *imputedRawData, levels, NULL, NULL, markersInRelevantGroup, error, progressFunction);
+		std::vector<std::pair<int, int> > reportedErrors;
+		bool ok = imputeFunction(rawImageData, *imputedRawData, levels, NULL, NULL, markersInRelevantGroup, progressFunction, false, reportedErrors);
 		if(!ok) throw std::runtime_error("Imputation failed!");
 	}
 }

@@ -9,7 +9,7 @@ namespace mpMapInteractive
 {
 	struct qtPlotData
 	{
-		typedef bool (*imputeFunctionType)(const unsigned char* theta, unsigned char* imputedTheta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::string& error, std::function<void(unsigned long, unsigned long)> statusFunction);
+		typedef bool (*imputeFunctionType)(const unsigned char* theta, unsigned char* imputedTheta, std::vector<double>& thetaLevels, double* lod, double* lkhd, std::vector<int>& markers, std::function<void(unsigned long, unsigned long)> statusFunction, bool allErrors, std::vector<std::pair<int, int> >& reportedError);
 		qtPlotData(const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames);
 		qtPlotData(const std::vector<int>& originalGroups, const std::vector<std::string>& originalMarkerNames, std::vector<std::vector<int> >&& cumulativePermutations, std::vector<std::vector<int> >&& groups);
 		int startOfGroup(int group) const;
