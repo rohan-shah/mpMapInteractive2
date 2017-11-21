@@ -19,6 +19,13 @@ namespace mpMapInteractive
 		rowMajorMatrix(rowMajorMatrix<T>&& other)
 			:data(std::move(other.data)), nRows(other.nRows), nColumns(other.nColumns)
 		{}
+		rowMajorMatrix<T>& operator=(rowMajorMatrix<T>&& other)
+		{
+			data = std::move(other.data);
+			nRows = other.nRows;
+			nColumns = other.nColumns;
+			return *this;
+		}
 		void resize(int nRows, int nColumns)
 		{
 			data.resize(nRows*nColumns);
@@ -62,6 +69,7 @@ namespace mpMapInteractive
 		imageTile(const unsigned char* data, int dataRows, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene, const QVector<QRgb>& colours);
 		~imageTile();
 		imageTile(imageTile&& other);
+		imageTile& operator=(imageTile&& other);
 		const std::vector<int>& getRowIndices() const;
 		const std::vector<int>& getColumnIndices() const;
 		QGraphicsItemGroup* getItem() const;

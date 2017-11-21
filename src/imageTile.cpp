@@ -17,6 +17,18 @@ namespace mpMapInteractive
 		: data(other.data), rowIndices(std::move(other.rowIndices)), columnIndices(std::move(other.columnIndices)), pixMapItems(std::move(other.pixMapItems)), groupItem(std::move(other.groupItem)), columnPartition(std::move(other.columnPartition)), rowPartition(std::move(other.rowPartition)), graphicsScene(other.graphicsScene), colours(other.colours)
 	{
 	}
+	imageTile& imageTile::operator=(imageTile&& other)
+	{
+		data = other.data;
+		rowIndices = std::move(other.rowIndices);
+		columnIndices = std::move(other.columnIndices);
+		pixMapItems = std::move(other.pixMapItems);
+		groupItem = std::move(other.groupItem);
+		columnPartition = std::move(other.columnPartition);
+		rowPartition = std::move(other.rowPartition);
+		graphicsScene = other.graphicsScene;
+		return *this;
+	}
 	imageTile::imageTile(const unsigned char* data, int dataRows, const std::vector<int>& rowIndices, const std::vector<int>& columnIndices, QGraphicsScene* graphicsScene, const QVector<QRgb>& colours)
 		: data(data), rowIndices(rowIndices), columnIndices(columnIndices), pixMapItems(0, 0), graphicsScene(graphicsScene), colours(colours)
 	{
