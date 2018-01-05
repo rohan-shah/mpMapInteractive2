@@ -1,8 +1,8 @@
 Package: mpMapInteractive2
 Type: Package
 Title: Interactive components for package mpMap2
-Version: 0.0.3
-Date: 2017-10-02
+Version: 0.0.4
+Date: 2018-01-05
 Author: Rohan Shah
 Maintainer: Rohan Shah <cran@bookshah.com>
 Description: This package provides interactive plotting functions for the mpMap2 package
@@ -13,6 +13,6 @@ Collate:
    'Rcpp_exceptions.R'
 Depends:
     Rcpp,
-    mpMap2 (>= 0.0.3),
+    mpMap2 (>= 0.0.4),
     fastcluster
 LinkingTo: Rcpp
