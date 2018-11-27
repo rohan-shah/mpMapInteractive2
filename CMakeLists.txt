@@ -9,6 +9,7 @@ if(USE_CUSTOM_RCPP)
 endif()
 
 set(RFiles onLoad.R mpMapInteractive2.R Rcpp_exceptions.R)
+set(manFiles mpMapInteractive2.Rd)
 
 #This is the target that copies the NAMESPACE, DESCRIPTION and R files to the binary directory
 add_custom_target(copyPackage ALL)
@@ -26,6 +27,9 @@ if(WIN32 AND (NOT "${CMAKE_GENERATOR}" STREQUAL "NMake Makefiles"))
 		foreach(RFile IN LISTS RFiles)
 			add_custom_command(TARGET copyPackage COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/R/${RFile} ${CMAKE_BINARY_DIR}/${BUILD_TYPE}/R/${RFile})
 		endforeach()
+		foreach(manFile IN LISTS manFiles)
+			add_custom_command(TARGET copyPackage COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/man/${manFile} ${CMAKE_BINARY_DIR}/${BUILD_TYPE}/man/${manFile})
+		endforeach()
 	endforeach()
 #In this case we assume that we're building a single configuration
 else()
@@ -41,6 +45,9 @@ else()
 	#Copy R files
 	foreach(RFile IN LISTS RFiles)
 		add_custom_command(TARGET copyPackage COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/R/${RFile} ${CMAKE_BINARY_DIR}/R/${RFile})
+	endforeach()
+	foreach(manFile IN LISTS manFiles)
+		add_custom_command(TARGET copyPackage COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/man/${manFiles} ${CMAKE_BINARY_DIR}/man/${manFiles})
 	endforeach()
 endif()
 add_subdirectory(src)

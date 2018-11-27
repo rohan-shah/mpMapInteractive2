@@ -124,6 +124,8 @@ namespace mpMapInteractive
 		QFormLayout* formLayout = new QFormLayout;
 		
 		QLabel* undoLabel = new QLabel(QString("Undo (Ctrl + U)"));
+		undoLabel->setToolTip(QString("Undo last change"));
+
 		//set up pallete to highlight enabled labels / shortcuts
 		QPalette p = undoLabel->palette();
 		p.setColor(QPalette::Active, QPalette::WindowText, QColor("blue"));
@@ -132,6 +134,8 @@ namespace mpMapInteractive
 
 		deleteLabel = new QLabel(QString("Delete (Del)"));
 		deleteLabel->setPalette(p);
+		deleteLabel->setToolTip(QString("Delete the currently selected marker"));
+
 		formLayout->addRow(deleteLabel, new QLabel(""));
 
 		frame->setLayout(formLayout);

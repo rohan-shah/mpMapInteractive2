@@ -21,9 +21,11 @@ namespace mpMapInteractive
 		QFormLayout* formLayout = new QFormLayout;
 
 		undoLabel = new QLabel(QString("Undo (Ctrl + U)"));
+		undoLabel->setToolTip(QString("Undo last change"));
 		formLayout->addRow(undoLabel, new QLabel(""));
 
 		joinGroupsLabel = new QLabel("Join groups (Ctrl + j)");
+		joinGroupsLabel->setToolTip(QString("Join two groups of markers. Use this by mousing over an off-diagonal region on the plot, which specifies two groups; one group is the highlighted column, and one is the highlighted row. Hitting Ctrl + J joins these groups."));
 		formLayout->addRow(joinGroupsLabel, new QLabel(""));
 		
 		{
@@ -33,13 +35,17 @@ namespace mpMapInteractive
 			formLayout->addRow(seperator);
 		}
 
+		QString gotoTip("Jump to the specified groups. If one group is specified, view the recombination fraction between markers in that group. If two groups are specified, view the recombination fractions BETWEEN markers in THOSE groups.");
 		QLabel* gotoLabel = new QLabel("Goto groups (Ctrl + G)");
+		gotoLabel->setToolTip(gotoTip);
 		formLayout->addRow(gotoLabel);
 
 		group1Edit = new QLineEdit;
 		group1Edit->setValidator(new QIntValidator());
+		group1Edit->setToolTip(gotoTip);
 		group2Edit = new QLineEdit;
 		group2Edit->setValidator(new QIntValidator());
+		group2Edit->setToolTip(gotoTip);
 		
 		formLayout->addRow(new QLabel("Group 1"), group1Edit);
 		formLayout->addRow(new QLabel("Group 2"), group2Edit);
@@ -52,11 +58,14 @@ namespace mpMapInteractive
 			formLayout->addRow(seperator);
 		}
 
+		QString orderLabelTip("Order all groups except the ones specified. Groups should be separated by white space.");
 		QLabel* orderLabel = new QLabel("Order all groups except (Ctrl + O)");
+		orderLabel->setToolTip(orderLabelTip);
 
 		orderAllExcept = new QLineEdit;
 		QRegExp intList(QString("(\\d+\\s*)*"));
 		orderAllExcept->setValidator(new QRegExpValidator(intList));
+		orderAllExcept->setToolTip(orderLabelTip);
 		formLayout->addRow(orderLabel, orderAllExcept);
 
 		frame->setLayout(formLayout);

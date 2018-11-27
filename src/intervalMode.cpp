@@ -28,6 +28,7 @@ namespace mpMapInteractive
 		QFormLayout* formLayout = new QFormLayout;
 		
 		undoLabel = new QLabel(QString("Undo (Ctrl + U)"));
+		undoLabel->setToolTip(QString("Undo last change"));
 		formLayout->addRow(undoLabel, new QLabel(""));
 
 		{
@@ -38,46 +39,71 @@ namespace mpMapInteractive
 		}
 
 		orderLabel = new QLabel(QString("Order (Ctrl + O)"));
+		orderLabel->setToolTip(QString("Perform automatic ordering of the markers in the selected marker interval."));
+
 		formLayout->addRow(orderLabel);
+
+		QString effortLabelTip("Computational effort multiplier for the marker ordering. 1 = Default, 2 = twice as much computational effort, etc.");
 		effortLabel = new QLabel("Effort multiplier:");
+		effortLabel->setToolTip(effortLabelTip);
+
 		effortEdit = new QLineEdit;
 		effortEdit->setValidator(new QDoubleValidator());
+		effortEdit->setToolTip(effortLabelTip);
+		
 		formLayout->addRow(effortLabel, effortEdit);
 
+		QString maxDistTip("The maximum position shift for a marker, by the automatic marker ordering algorithm. Smaller values SIGNIFICANTLY reduce computational time, and have little impact on ordering quality, IF the markers are currently in APPROXIMATELY the right ordering.");
 		maxDistEdit = new QLineEdit;
 		maxDistEdit->setValidator(new QIntValidator());
+		maxDistEdit->setToolTip(maxDistTip);
+
 		maxDistLabel = new QLabel("Max shift size:");
+		maxDistLabel->setToolTip(maxDistTip);
+
 		formLayout->addRow(maxDistLabel, maxDistEdit);
 
 		randomStartCheckbox = new QCheckBox("Random start");
+		randomStartCheckbox->setToolTip(QString("Should automatic ordering begin from the current ordering, or a randomly chosen ordering? A random ordering is detrimental if the current ordering is approximately correct."));
 		formLayout->addRow(randomStartCheckbox);
 
 		addSeperator(formLayout);
 
 		reverseLabel = new QLabel(QString("Reverse (Ctrl + R)"));
+		reverseLabel->setToolTip(QString("Reverse the order of the markers in the currently selected marker interval"));
 		formLayout->addRow(reverseLabel, new QLabel(""));
 
 		addSeperator(formLayout);
 
 		clusterOrderLabel = new QLabel(QString("Order using hclust (Ctrl + H)"));
+		clusterOrderLabel->setToolTip("Roughly order the selected markers by using clustering to form large groups of markers, and then ordering the large groups. Use this to quickly get a very rough ordering.");
 		formLayout->addRow(clusterOrderLabel);
 
+		QString clusterOrderGroupsTip("Number of groups to use for hclust ordering");
 		clusterOrderGroupsEdit = new QLineEdit;
 		clusterOrderGroupsEdit->setValidator(new QIntValidator());
+		clusterOrderGroupsEdit->setToolTip(clusterOrderGroupsTip);
+
 		clusterOrderGroupsLabel = new QLabel("Number of groups");
+		clusterOrderGroupsLabel->setToolTip(clusterOrderGroupsTip);
 		formLayout->addRow(clusterOrderGroupsLabel, clusterOrderGroupsEdit);
 
+		QString clusterOrderEffortTip("Computational effort multiplier for the ordering of the large marker groups, formed using clustering. 1 = Default, 2 = twice as much computational effort, etc.");
 		clusterOrderEffortEdit = new QLineEdit;
 		clusterOrderEffortEdit->setValidator(new QDoubleValidator());
+		clusterOrderEffortEdit->setToolTip(clusterOrderEffortTip);
 		clusterOrderEffortLabel = new QLabel("Effort multiplier:");
+		clusterOrderEffortLabel->setToolTip(clusterOrderEffortTip);
 		formLayout->addRow(clusterOrderEffortLabel, clusterOrderEffortEdit);
 
 		addSeperator(formLayout);
 
 		cutLabel = new QLabel(QString("Cut (Ctrl + X)"));
+		cutLabel->setToolTip(QString("Cut the selected marker interval, in order to shift it somewhere else. No changes are made until you hit paste."));
 		formLayout->addRow(cutLabel, new QLabel(""));
 
 		pasteLabel = new QLabel(QString("Paste (Ctrl + V)"));
+		pasteLabel->setToolTip(QString("Paste a marker interval that was previously cut, to a column selected with the mouse. The markers are inserted to the right of the selected column."));
 		formLayout->addRow(pasteLabel, new QLabel(""));
 
 		frame->setLayout(formLayout);
